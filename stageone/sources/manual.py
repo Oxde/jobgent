@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
+import socket
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urljoin, urlsplit
 
 import httpx
 from pydantic import BaseModel
@@ -56,11 +59,41 @@ def add_job_from_text(session: Session, llm: LLM, model: str, text: str, url: st
     return job
 
 
-def add_job_from_url(session: Session, llm: LLM, model: str, client: httpx.Client, url: str) -> Job:
+_MAX_REDIRECTS = 5
+
+
+def assert_public_http_url(url: str) -> None:
+    """Only public http(s) hosts may be fetched: never loopback, private, link-local or reserved addresses.
+    Matters once the tool is hosted for other users (SSRF); harmless locally."""
+    parts = urlsplit(url)
+    host = parts.hostname
+    if parts.scheme not in ("http", "https") or not host:
+        raise SourceError(SOURCE, f"{url!r} is not a public http(s) URL. Paste the posting text instead.")
     try:
-        resp = client.get(url, timeout=30, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (StageOne)"})
-    except httpx.HTTPError as e:
-        raise SourceError(SOURCE, f"could not fetch {url}: {e}") from e
-    if resp.status_code >= 300:
-        raise SourceError(SOURCE, f"HTTP {resp.status_code} fetching {url}: {resp.text[:200]}. Paste the posting text instead.")
-    return add_job_from_text(session, llm, model, text=html_to_text(resp.text), url=url)
+        infos = socket.getaddrinfo(host, parts.port or (443 if parts.scheme == "https" else 80), proto=socket.IPPROTO_TCP)
+    except socket.gaierror as e:
+        raise SourceError(SOURCE, f"could not resolve {host}: {e}") from e
+    for info in infos:
+        ip = ipaddress.ip_address(str(info[4][0]))
+        if not ip.is_global:
+            raise SourceError(SOURCE, f"{url!r} resolves to {ip}, not a public http(s) host. Paste the posting text instead.")
+
+
+def add_job_from_url(session: Session, llm: LLM, model: str, client: httpx.Client, url: str) -> Job:
+    current = url
+    for _ in range(_MAX_REDIRECTS + 1):
+        assert_public_http_url(current)
+        try:
+            resp = client.get(current, timeout=30, follow_redirects=False, headers={"User-Agent": "Mozilla/5.0 (StageOne)"})
+        except httpx.HTTPError as e:
+            raise SourceError(SOURCE, f"could not fetch {current}: {e}") from e
+        if resp.is_redirect:
+            location = resp.headers.get("Location")
+            if not location:
+                raise SourceError(SOURCE, f"redirect without Location from {current}")
+            current = urljoin(current, location)
+            continue
+        if resp.status_code >= 300:
+            raise SourceError(SOURCE, f"HTTP {resp.status_code} fetching {current}: {resp.text[:200]}. Paste the posting text instead.")
+        return add_job_from_text(session, llm, model, text=html_to_text(resp.text), url=url)
+    raise SourceError(SOURCE, f"too many redirects fetching {url}")
