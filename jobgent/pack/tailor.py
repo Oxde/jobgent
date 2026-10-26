@@ -12,7 +12,7 @@ from jobgent.llm import LLM
 from jobgent.profile.models import Education, Experience, Profile, Project
 from jobgent.score import profile_for_prompt
 
-_PROMPT = (Path(__file__).parent.parent / "prompts" / "tailor.md").read_text() + "\n\n" + cv_writing_guide()
+TAILOR_PROMPT = (Path(__file__).parent.parent / "prompts" / "tailor.md").read_text() + "\n\n" + cv_writing_guide()
 
 
 class TailoredCV(BaseModel):
@@ -47,7 +47,7 @@ def tailor_cv(llm: LLM, model: str, profile: Profile, job: Job, extra_instructio
     user = f"## Profile (only source of truth)\n{profile_for_prompt(profile)}\n\n## Posting\n{job_text(job)}"
     if extra_instruction:
         user += f"\n\n## Extra instruction\n{extra_instruction}"
-    return llm.complete_json(model=model, system=_PROMPT, user=user, schema=TailoredCV, max_tokens=4096)
+    return llm.complete_json(model=model, system=TAILOR_PROMPT, user=user, schema=TailoredCV, max_tokens=4096)
 
 
 def general_cv(profile: Profile) -> TailoredCV:

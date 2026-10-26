@@ -27,6 +27,10 @@ TONES: dict[str, str] = {
 }
 
 
+def letter_instructions(voice: str, tone: str) -> str:
+    return _PROMPT.replace("{voice}", voice.strip()).replace("{tone}", TONES.get(tone, TONES["warm"]))
+
+
 def write_letter(
     llm: LLM,
     model: str,
@@ -38,7 +42,7 @@ def write_letter(
     requirements: list[str] | None = None,
     fix: list[str] | None = None,
 ) -> CoverLetter:
-    system = _PROMPT.replace("{voice}", voice.strip()).replace("{tone}", TONES.get(tone, TONES["warm"]))
+    system = letter_instructions(voice, tone)
     parts = [f"## Profile (only source of truth)\n{profile_for_prompt(profile)}"]
     if profile.facts:
         parts.append("## Facts about me (use, never invent beyond them)\n" + "\n".join(f"- {f}" for f in profile.facts))

@@ -20,8 +20,8 @@ from jobgent.profile.models import Profile
 from jobgent.score import profile_for_prompt, score_job
 
 _DIR = Path(__file__).parent / "prompts"
-_EXTRACT = (_DIR / "requirements.md").read_text()
-_MAP = (_DIR / "map_requirements.md").read_text()
+EXTRACT_PROMPT = (_DIR / "requirements.md").read_text()
+MAP_PROMPT = (_DIR / "map_requirements.md").read_text()
 
 Importance = Literal["critical", "high", "nice"]
 Coverage = Literal["covered", "partial", "gap"]
@@ -134,26 +134,39 @@ def evaluate_job(
     if client is not None:
         refresh_liveness(session, job, client)
     gates = run_gates(job, profile)
-    rows: list[RequirementRow] = []
-    summary = ""
-    deadline = job.deadline
+    extracted: Extracted | None = None
+    mapped: Mapped | None = None
     score: int | None = None
     if not any(g.status == "fail" for g in gates):
-        posting = f"Title: {job.title}\nCompany: {job.company}\nLocation: {job.location or ''}\n\n{wrap_posting(job.description[:8000])}"
-        extracted = llm.complete_json(model=model, system=_EXTRACT, user=posting, schema=Extracted, max_tokens=2048)
-        reqs = "\n".join(f"{i}. [{r.importance}] {r.text}" for i, r in enumerate(extracted.requirements))
-        mapped = llm.complete_json(
-            model=model, system=_MAP, user=f"## Profile\n{profile_for_prompt(profile)}\n\n## Requirements\n{reqs}", schema=Mapped, max_tokens=2048
-        )
-        rows = resolve(extracted.requirements, mapped.items, profile)
-        summary, deadline = extracted.summary, extracted.deadline or job.deadline
+        extracted = llm.complete_json(model=model, system=EXTRACT_PROMPT, user=posting_text(job), schema=Extracted, max_tokens=2048)
+        mapped = llm.complete_json(model=model, system=MAP_PROMPT, user=mapping_input(profile, extracted), schema=Mapped, max_tokens=2048)
         score = score_job(session, llm, model, profile, job).total
+    return finalize_evaluation(session, profile, job, gates, extracted, mapped, score, model)
+
+
+def posting_text(job: Job) -> str:
+    return f"Title: {job.title}\nCompany: {job.company}\nLocation: {job.location or ''}\n\n{wrap_posting(job.description[:8000])}"
+
+
+def mapping_input(profile: Profile, extracted: Extracted) -> str:
+    reqs = "\n".join(f"{i}. [{r.importance}] {r.text}" for i, r in enumerate(extracted.requirements))
+    return f"## Profile\n{profile_for_prompt(profile)}\n\n## Requirements\n{reqs}"
+
+
+def finalize_evaluation(
+    session: Session, profile: Profile, job: Job, gates: list[Gate], extracted: Extracted | None, mapped: Mapped | None,
+    score: int | None, model: str,
+) -> Evaluation:
+    """The deterministic half: code resolves coverage and decides the verdict, whoever wrote the extraction and mapping.
+    With no score, coverage decides."""
+    rows = resolve(extracted.requirements, mapped.items if mapped else [], profile) if extracted else []
     verdict, reason = decide_verdict(gates, rows, score)
+    deadline = (extracted.deadline if extracted else None) or job.deadline
     ev = job.evaluation or Evaluation(job=job)
     ev.gates = [g.model_dump() for g in gates]
     ev.requirements = [r.model_dump() for r in rows]
     ev.coverage = coverage_percent(rows)
-    ev.verdict, ev.verdict_reason, ev.summary, ev.deadline = verdict, reason, summary, deadline
+    ev.verdict, ev.verdict_reason, ev.summary, ev.deadline = verdict, reason, extracted.summary if extracted else "", deadline
     ev.model, ev.created_at = model, datetime.now()
     job.deadline = deadline
     session.add(ev)

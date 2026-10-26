@@ -83,27 +83,31 @@ def _guard(cv: TailoredCV, letter_body: str, corpus: str) -> list[str]:
     return report.unverified_names
 
 
+class PageOverflowError(JobgentError):
+    def __init__(self, pages: int, job: Job) -> None:
+        self.pages = pages
+        super().__init__(f"CV is {pages} pages for job {job.id} ({job.title}); it must fit one A4 page. "
+                         "Shorten it by about 20% (fewer bullets, tighter wording, drop the least relevant project) and submit again.")
+
+
+def _default_pdf(html: str, out: Path) -> int:
+    return html_to_pdf(html, out, fit=True)
+
+
 def create_pack(
     settings: Settings,
     session: Session,
     llm: LLM,
     store: ProfileStore,
     job_id: int,
-    pdf: Callable[[str, Path], int] = lambda html, out: html_to_pdf(html, out, fit=True),
+    pdf: Callable[[str, Path], int] = _default_pdf,
 ) -> PackResult:
     """Tailor → letter → review → banned-phrase pass → fact guard → AI fact check → one-page PDF."""
-    job = session.get(Job, job_id)
-    if job is None:
-        raise JobgentError(f"No job with id {job_id}. Use jobs_list to find ids.")
-    profile = store.load()
-    if not profile.verified:
-        raise ProfileNotVerifiedError()
+    job = _job(session, job_id)
+    profile = _verified_profile(store)
     app = get_or_create_application(session, job.id)
     tone = app.tone or profile.preferences.tone
-    requirements = [
-        f"- [{r['importance']}] {r['text']}: {r['status']}" + (f" ({r['evidence']})" if r.get("evidence") else "")
-        for r in (job.evaluation.requirements if job.evaluation else [])
-    ]
+    requirements = requirement_lines(job)
 
     cv = tailor_cv(llm, settings.smart_model, profile, job)
     letter = write_letter(llm, settings.smart_model, profile, job, store.voice(), tone=tone, note=app.ai_note, requirements=requirements)
@@ -115,9 +119,73 @@ def create_pack(
     letter = CoverLetter(body=tidy_letter(letter.body))
 
     corpus = _corpus(profile, job)
-    check_this = _guard(cv, letter.body, corpus)
+    _guard(cv, letter.body, corpus)
     verify_against_profile(llm, settings.fast_model, profile, cv.as_text())
     verify_against_profile(llm, settings.fast_model, profile, letter.body)
+    notes = {k: getattr(review, k) for k in ("missed_keywords", "company_angle", "passive_phrasing", "tone")}
+
+    def finish(cv: TailoredCV) -> PackResult:
+        return finalize_pack(settings, session, store, job, cv, letter.body, tone=tone, pdf=pdf, reject_banned=False,
+                             review_applied=applied, review_skipped=skipped, review_notes=notes)
+
+    try:
+        return finish(cv)
+    except PageOverflowError:
+        cv = tailor_cv(llm, settings.smart_model, profile, job, extra_instruction="The previous version overflowed one A4 page. Shorten by about 20%: fewer bullets, tighter wording. Keep the most relevant content.")
+        _guard(cv, letter.body, corpus)
+        verify_against_profile(llm, settings.fast_model, profile, cv.as_text())
+        try:
+            return finish(cv)
+        except PageOverflowError as e:
+            raise JobgentError(f"CV is {e.pages} pages after one retry for job {job.id} ({job.title}). Trim the profile or the master template.") from e
+
+
+def _job(session: Session, job_id: int) -> Job:
+    job = session.get(Job, job_id)
+    if job is None:
+        raise JobgentError(f"No job with id {job_id}. Use jobs_list to find ids.")
+    return job
+
+
+def _verified_profile(store: ProfileStore) -> Profile:
+    profile = store.load()
+    if not profile.verified:
+        raise ProfileNotVerifiedError()
+    return profile
+
+
+def requirement_lines(job: Job) -> list[str]:
+    return [
+        f"- [{r['importance']}] {r['text']}: {r['status']}" + (f" ({r['evidence']})" if r.get("evidence") else "")
+        for r in (job.evaluation.requirements if job.evaluation else [])
+    ]
+
+
+def finalize_pack(
+    settings: Settings,
+    session: Session,
+    store: ProfileStore,
+    job: Job,
+    cv: TailoredCV,
+    letter_body: str,
+    *,
+    tone: str,
+    pdf: Callable[[str, Path], int] = _default_pdf,
+    reject_banned: bool = True,
+    review_applied: list[str] | None = None,
+    review_skipped: list[str] | None = None,
+    review_notes: dict[str, str] | None = None,
+) -> PackResult:
+    """The deterministic half, whoever wrote the CV and letter: banned phrases, fact guard, one-page PDF, ATS check,
+    save documents, status. Every refusal says what to fix so an agent can resubmit."""
+    profile = _verified_profile(store)
+    if reject_banned:
+        banned = banned_phrases(letter_body)
+        if banned:
+            raise JobgentError("The letter uses banned phrases: " + ", ".join(banned) + ". Rewrite those sentences with concrete facts and submit again.")
+    letter = CoverLetter(body=tidy_letter(letter_body))
+    corpus = _corpus(profile, job)
+    check_this = _guard(cv, letter.body, corpus)
 
     out_dir = pack_dir_for(settings, job)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -125,13 +193,7 @@ def create_pack(
     html = render_cv_html(profile, cv, store.master_cv_path(), profile.preferences.template)
     pages = pdf(html, cv_pdf_path)
     if pages > 1:
-        cv = tailor_cv(llm, settings.smart_model, profile, job, extra_instruction="The previous version overflowed one A4 page. Shorten by about 20%: fewer bullets, tighter wording. Keep the most relevant content.")
-        check_this = _guard(cv, letter.body, corpus)
-        verify_against_profile(llm, settings.fast_model, profile, cv.as_text())
-        html = render_cv_html(profile, cv, store.master_cv_path(), profile.preferences.template)
-        pages = pdf(html, cv_pdf_path)
-        if pages > 1:
-            raise JobgentError(f"CV is {pages} pages after one retry for job {job.id} ({job.title}). Trim the profile or the master template.")
+        raise PageOverflowError(pages, job)
     cv_html_path.write_text(html)
     letter_path.write_text(letter.body)
     (out_dir / "job_posting.md").write_text(f"# {job.title} at {job.company}\n\n{job.url}\n\nArchived {datetime.now():%Y-%m-%d}\n\n{job.description}")
@@ -154,9 +216,9 @@ def create_pack(
         apply_url=job.url,
         apply_email=email_match.group(0) if email_match else None,
         created_at=datetime.now(),
-        review_applied=applied,
-        review_skipped=skipped,
-        review_notes={k: getattr(review, k) for k in ("missed_keywords", "company_angle", "passive_phrasing", "tone")},
+        review_applied=review_applied or [],
+        review_skipped=review_skipped or [],
+        review_notes=review_notes or {},
         check_this=check_this,
         tone=tone,
         ats_ok=ats.ok,
@@ -172,6 +234,7 @@ def create_pack(
         "subject": f"Application: {job.title} – {profile.personal.name}",
         "body": f"Dear hiring team,\n\nPlease find attached my CV and cover letter for the {job.title} position at {job.company}.\n\nKind regards,\n{profile.personal.name}",
     }, cause="written")
+    app = get_or_create_application(session, job.id)
     if app.status in (Status.new, Status.liked):
         record_status(session, app, Status.pack_ready)
         app.status = Status.pack_ready

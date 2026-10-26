@@ -15,22 +15,24 @@ from jobgent.errors import JobgentError
 from jobgent.classify import classify_jobs
 from jobgent.db import Status
 from jobgent.agent import QueueItem, agent_queue, run_agent
-from jobgent.evaluate import evaluate_job
+from jobgent.evaluate import EXTRACT_PROMPT, MAP_PROMPT, Extracted, Mapped, evaluate_job, finalize_evaluation, posting_text
+from jobgent.gates import run_gates
 from jobgent.insights import LearningGap, learning_gaps
 from jobgent.interview import InterviewPrep, prepare_interview
 from jobgent.fetch import FetchSummary, fetch_all
-from jobgent.pack.create import PackResult, create_pack, load_pack
+from jobgent.pack.create import PackResult, create_pack, finalize_pack, load_pack, requirement_lines
+from jobgent.pack.letter import letter_instructions
 from jobgent.guides import cv_writing_guide
 from jobgent.pack.pdf import html_to_pdf
 from jobgent.pack.render import render_cv_html
-from jobgent.pack.tailor import general_cv
+from jobgent.pack.tailor import TAILOR_PROMPT, TailoredCV, general_cv, job_text
 from jobgent.profile.models import Profile
 from jobgent.profile.store import outline
-from jobgent.score import score_job
+from jobgent.score import profile_for_prompt, score_job
 from jobgent.search import SearchResult, search_jobs
 from jobgent.service import Services, build_services
 from jobgent.sources.manual import add_job_from_text, add_job_from_url
-from jobgent.tracker import WeeklyStats, set_status, weekly_stats
+from jobgent.tracker import WeeklyStats, get_or_create_application, set_status, weekly_stats
 from jobgent.views import JobDetail, JobSummary, detail, get_job, list_applications, list_jobs
 
 
@@ -71,7 +73,11 @@ def build_mcp(services: Services) -> FastMCP:
             "Jobgent finds internships in the Netherlands, scores them against the user's profile, "
             "and prepares a tailored CV + cover letter per job. The user reviews and submits every application "
             "themselves. Typical loop: profile_get (fix with profile_update, then profile_set_verified) → "
-            "jobs_fetch → jobs_list → job_get → pack_create → the user applies → application_set_status(applied)."
+            "jobs_fetch → jobs_list → job_get → pack_create → the user applies → application_set_status(applied). "
+            "Agent mode: if Jobgent has no AI key (job_evaluate / pack_create fail with a missing-key error) or you prefer "
+            "to write yourself, use evaluate_prompt → evaluate_submit and pack_prompt → pack_submit. You do the writing; "
+            "Jobgent still runs the gates, decides coverage and the verdict, blocks invented numbers and banned phrases, "
+            "and renders the one-page PDF. When a submit is refused, fix what the message names and submit again."
         ),
     )
 
@@ -261,6 +267,86 @@ def build_mcp(services: Services) -> FastMCP:
         with services.sessionmaker() as s, services.http_client_factory() as client:
             ev = evaluate_job(s, llm, services.settings.fast_model, profile, get_job(s, job_id), client)
             return {k: getattr(ev, k) for k in ("verdict", "verdict_reason", "summary", "deadline", "coverage", "gates", "requirements")}
+
+    @mcp.tool()
+    @surface_errors
+    def evaluate_prompt(job_id: int) -> dict[str, object]:
+        """Agent mode, step 1 of evaluation: everything you need to evaluate a posting with your own model.
+        Runs the deterministic gates first; if one fails the job is skipped right away (done=true, no work for you).
+        Otherwise follow `instructions`: extract the requirements (extracted_schema) from `posting` only, then map each
+        to evidence in `profile` (mapped_schema, indexes into the profile lists), and call evaluate_submit."""
+        profile = services.store.load()
+        with services.sessionmaker() as s:
+            job = get_job(s, job_id)
+            gates = run_gates(job, profile)
+            if any(g.status == "fail" for g in gates):
+                ev = finalize_evaluation(s, profile, job, gates, None, None, None, "host-agent")
+                return {"done": True, "verdict": ev.verdict, "verdict_reason": ev.verdict_reason, "gates": ev.gates}
+            return {
+                "done": False,
+                "gates": [g.model_dump() for g in gates],
+                "instructions": "## Step A: extract requirements\n" + EXTRACT_PROMPT + "\n\n## Step B: map requirements to evidence\n" + MAP_PROMPT,
+                "posting": posting_text(job),
+                "profile": profile_for_prompt(profile),
+                "extracted_schema": Extracted.model_json_schema(),
+                "mapped_schema": Mapped.model_json_schema(),
+            }
+
+    @mcp.tool()
+    @surface_errors
+    def evaluate_submit(job_id: int, extracted: Extracted, mapped: Mapped) -> dict[str, object]:
+        """Agent mode, step 2 of evaluation: submit your extraction and mapping. Jobgent re-runs the gates, checks every
+        evidence pointer against the profile (pointers to entries that do not exist count as gaps), resolves
+        covered / partial / gap, and decides the verdict from coverage."""
+        profile = services.store.load()
+        with services.sessionmaker() as s:
+            job = get_job(s, job_id)
+            ev = finalize_evaluation(s, profile, job, run_gates(job, profile), extracted, mapped, None, "host-agent")
+            return {k: getattr(ev, k) for k in ("verdict", "verdict_reason", "summary", "deadline", "coverage", "gates", "requirements")}
+
+    @mcp.tool()
+    @surface_errors
+    def pack_prompt(job_id: int) -> dict[str, object]:
+        """Agent mode, step 1 of the pack: everything you need to write the tailored CV and cover letter yourself.
+        Write the CV as JSON matching cv_schema (cv_instructions), the letter as plain text (letter_instructions),
+        then call pack_submit. Use only facts from `profile` and `facts`."""
+        profile = services.store.load()
+        if not profile.verified:
+            raise JobgentError("Profile is not verified. Review it with the user, then call profile_set_verified(true).")
+        with services.sessionmaker() as s:
+            job = get_job(s, job_id)
+            app = get_or_create_application(s, job.id)
+            tone = app.tone or profile.preferences.tone
+            s.commit()
+            return {
+                "cv_instructions": TAILOR_PROMPT,
+                "letter_instructions": letter_instructions(services.store.voice(), tone),
+                "tone": tone,
+                "profile": profile_for_prompt(profile),
+                "facts": profile.facts,
+                "note": app.ai_note,
+                "requirements": requirement_lines(job),
+                "posting": job_text(job),
+                "cv_schema": TailoredCV.model_json_schema(),
+                "rules": [
+                    "Never invent numbers, employers, tools or names: every number must appear in the profile or the posting, or the submit is refused.",
+                    "The CV must fit one A4 page; if it does not, the submit is refused and you shorten it.",
+                    "No cliches in the letter (passionate, team player, dynamic, leverage, ...); they are refused.",
+                    "Paragraphs in the letter are separated by a blank line.",
+                ],
+            }
+
+    @mcp.tool()
+    @in_thread
+    def pack_submit(job_id: int, cv: TailoredCV, letter: str) -> PackResult:
+        """Agent mode, step 2 of the pack: submit your CV (cv_schema) and letter. Jobgent blocks invented numbers and
+        banned phrases, renders the one-page A4 PDF, runs the ATS check, saves the documents (with undo) and marks the
+        job pack_ready. If refused, fix exactly what the error names and submit again."""
+        with services.sessionmaker() as s:
+            job = get_job(s, job_id)
+            profile = services.store.load()
+            tone = (job.application.tone if job.application else "") or profile.preferences.tone
+            return finalize_pack(services.settings, s, services.store, job, cv, letter, tone=tone)
 
     @mcp.tool()
     @in_thread
