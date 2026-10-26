@@ -124,8 +124,8 @@ def build_mcp(services: Services) -> FastMCP:
     @mcp.tool()
     @surface_errors
     def profile_import_jobkiller(json_path: str) -> Profile:
-        """Bootstrap the profile from a JobKiller user_info JSON file. Leaves verified=false."""
-        return services.store.import_jobkiller(Path(json_path).expanduser())
+        """Bootstrap the profile from a JobKiller user_info .json or a CV .html made by JobKiller. Leaves verified=false."""
+        return services.store.import_any(Path(json_path).expanduser())
 
     @mcp.tool()
     @surface_errors

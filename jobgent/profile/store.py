@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import date, datetime
+from html import unescape
 from pathlib import Path
 
 import yaml
@@ -15,6 +16,7 @@ from jobgent.profile.models import (
     Experience,
     Language,
     Personal,
+    Preferences,
     Profile,
     Project,
     SearchProfile,
@@ -99,6 +101,116 @@ class ProfileStore:
             raise KeyError(f"{section}[{index}] does not exist")
         del target[index]
         profile = Profile.model_validate(data)
+        self.save(profile)
+        return profile
+
+    def import_any(self, path: Path) -> Profile:
+        """A JobKiller user_info .json, or a CV .html made by JobKiller."""
+        if path.suffix.lower() == ".json":
+            return self.import_jobkiller(path)
+        if path.suffix.lower() in (".html", ".htm"):
+            return self.import_jobkiller_html(path)
+        raise ValueError(f"Cannot import {path.name}: expected a JobKiller .json profile or a CV .html, got {path.suffix or 'no extension'}")
+
+    def import_jobkiller_html(self, html_path: Path) -> Profile:
+        """Import a CV made by the JobKiller MCP (its fixed class names: name, job, education-item, skills-content...).
+        Keeps languages, search and preferences from the current profile; leaves verified=false."""
+        doc = html_path.read_text()
+        current = self.load() if self.exists() else None
+
+        def text(fragment: str) -> str:
+            fragment = re.sub(r"<br\s*/?>", " ", fragment)
+            return " ".join(unescape(re.sub(r"<[^>]+>", "", fragment)).split())
+
+        def first(cls: str, scope: str = doc) -> str:
+            m = re.search(rf'class="{cls}"[^>]*>(.*?)</(?:div|span|td)>', scope, re.S)
+            return text(m.group(1)) if m else ""
+
+        def blocks(cls: str) -> list[str]:
+            starts = [m.start() for m in re.finditer(rf'<div class="{cls}">', doc)]
+            ends = starts[1:] + [len(doc)]
+            out = []
+            for a, b in zip(starts, ends):
+                chunk = doc[a:b]
+                cut = chunk.find('class="section-title"')
+                out.append(chunk[:cut] if cut > 0 else chunk)
+            return out
+
+        def split2(value: str) -> tuple[str, str]:
+            left, sep, right = value.partition(" | ")
+            return (left.strip(), right.strip()) if sep else ("", value.strip())
+
+        contact_lines = [text(d) for td in re.findall(r'<td class="[^"]*contact-info[^"]*">(.*?)</td>', doc, re.S) for d in re.findall(r"<div>(.*?)</div>", td, re.S)]
+        personal = Personal(name=first("name"), headline=first("professional-title"))
+        for line in contact_lines:
+            if line.lower().startswith("location:"):
+                personal.location = line.split(":", 1)[1].strip()
+            elif line.lower().startswith("date of birth:"):
+                personal.birth_date = line.split(":", 1)[1].strip()
+            elif line.lower().startswith(("number:", "phone:")):
+                personal.phone = line.split(":", 1)[1].strip()
+            elif "@" in line and " " not in line:
+                personal.email = line
+        for href in re.findall(r'href="([^"]+)"', doc[: doc.find('class="objective"') if 'class="objective"' in doc else len(doc)]):
+            if "linkedin.com" in href:
+                personal.linkedin = href
+            elif "github.com" in href:
+                personal.github = href
+
+        experience: list[Experience] = []
+        for b in blocks("job"):
+            company, title = split2(first("job-title", b))
+            location, period = split2(first("job-date", b))
+            bullets = [text(li) for li in re.findall(r"<li>(.*?)</li>", b, re.S)]
+            experience.append(Experience(company=company, title=title, location=location, period=period, bullets=bullets))
+
+        education: list[Education] = []
+        for b in blocks("education-item"):
+            header = re.search(r'class="degree-header">\s*<div>(.*?)</div>', b, re.S)
+            institution, degree = split2(text(header.group(1)) if header else "")
+            location, period = split2(first("degree-date", b))
+            details = first("degree-details", b)
+            gpa = ""
+            gm = re.match(r"GPA:\s*([^,]+),?\s*(.*)", details)
+            if gm:
+                gpa, details = gm.group(1).strip(), gm.group(2).strip()
+            education.append(Education(institution=institution, degree=degree, location=location, period=period, gpa=gpa, details=details))
+
+        skills_html = re.search(r'class="skills-content">(.*?)</div>', doc, re.S)
+        skills: list[Skill] = []
+        skills_note = ""
+        if skills_html:
+            raw = skills_html.group(1)
+            note = re.search(r'class="skills-highlight">(.*?)</span>', raw, re.S)
+            skills_note = text(note.group(1)) if note else ""
+            for part in re.split(r"\s*•\s*|\s{2,}", unescape(re.sub(r"<[^>]+>", "", raw.split("|")[0]))):
+                name = part.strip()
+                if name and not any(s.name == name for s in skills):
+                    skills.append(Skill(name=name))
+
+        projects: list[Project] = []
+        plist = re.search(r'class="projects-list">(.*?)</ul>', doc, re.S)
+        for li in re.findall(r"<li>(.*?)</li>", plist.group(1) if plist else "", re.S):
+            link = re.search(r'href="([^"]+)"', li)
+            title_html = re.search(r'class="project-title">(.*?)</span>', li, re.S)
+            name = text(title_html.group(1)) if title_html else ""
+            rest = text(li[title_html.end():]) if title_html else text(li)
+            projects.append(Project(name=name, description=rest.lstrip(":").strip(), link=link.group(1) if link else ""))
+
+        year = date.today().year + 1
+        profile = Profile(
+            verified=False,
+            personal=personal,
+            summary=first("objective"),
+            skills_note=skills_note,
+            experience=experience,
+            education=education,
+            skills=skills,
+            projects=projects,
+            languages=current.languages if current else [],
+            preferences=current.preferences if current else Preferences(),
+            search=current.search if current else SearchProfile(start_from=date(year, 2, 1), start_to=date(year, 4, 1)),
+        )
         self.save(profile)
         return profile
 
@@ -211,13 +323,13 @@ def _language(value: object) -> Language:
     if isinstance(value, dict):
         return Language(name=str(value.get("language") or value.get("name", "")), level=str(value.get("level", "")))
     text = str(value).strip()
-    name, sep, rest = text.partition("(")
-    if sep:
-        return Language(name=name.strip(), level=rest.strip().removesuffix(")").strip())
-    for d in (" – ", " - ", ": "):
+    for d in (": ", " – ", " - "):
         if d in text:
             name, _, level = text.partition(d)
             return Language(name=name.strip(), level=level.strip())
+    name, sep, rest = text.partition("(")
+    if sep:
+        return Language(name=name.strip(), level=rest.strip().removesuffix(")").strip())
     return Language(name=text)
 
 

@@ -21,6 +21,7 @@ DEFAULT_KEYWORDS = [
 class Personal(BaseModel):
     name: str
     headline: str = ""
+    birth_date: str = ""
     location: str = ""
     email: str = ""
     phone: str = ""
@@ -31,6 +32,7 @@ class Personal(BaseModel):
 class Education(BaseModel):
     institution: str
     degree: str
+    location: str = ""
     period: str = ""
     status: str = ""
     gpa: str = ""
@@ -40,6 +42,7 @@ class Education(BaseModel):
 class Experience(BaseModel):
     company: str
     title: str
+    location: str = ""
     period: str = ""
     bullets: list[str] = Field(default_factory=list)
 
@@ -88,6 +91,7 @@ class Profile(BaseModel):
     verified: bool = False
     personal: Personal
     summary: str = ""
+    skills_note: str = ""
     education: list[Education] = Field(default_factory=list)
     experience: list[Experience] = Field(default_factory=list)
     projects: list[Project] = Field(default_factory=list)

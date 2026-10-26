@@ -278,7 +278,7 @@ def build_api(services: Services) -> APIRouter:
         if not path.is_file():
             raise HTTPException(status_code=400, detail=f"No file at {path}")
         try:
-            return services.store.import_jobkiller(path)
+            return services.store.import_any(path)
         except (KeyError, ValueError, ValidationError) as e:
             raise _bad(e) from e
 

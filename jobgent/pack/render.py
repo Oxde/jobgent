@@ -56,6 +56,7 @@ def render_cv_html(
     return template.render(
         personal=profile.personal,
         headline=profile.personal.headline,
+        skills_note=profile.skills_note,
         cv=cv,
         languages=profile.languages,
         certifications=[],

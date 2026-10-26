@@ -50,7 +50,7 @@ def profile_verify(verified: bool = True) -> None:
 
 @profile_app.command("import")
 def profile_import(json_path: Path) -> None:
-    p = build_services().store.import_jobkiller(json_path)
+    p = build_services().store.import_any(json_path.expanduser())
     typer.echo(f"Imported profile for {p.personal.name}. Review it, then `jobgent profile verify`.")
 
 

@@ -3,89 +3,282 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>{{ personal.name }} - CV</title>
+<title>{{ personal.name }} - Resume</title>
 <style>
-@page { size: A4; margin: 12mm; }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { font-family: 'Times New Roman', Times, serif; font-size: 11.5pt; line-height: 1.25; color: #000; background: #fff; margin: 0; }
-@media screen { body { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 12mm; box-sizing: border-box; } }
-.header { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 10pt; align-items: end; margin-bottom: 0.14in; }
-.name { font-size: 20pt; font-weight: bold; color: #2E7D32; line-height: 1; margin-bottom: 3pt; }
-.professional-title { font-size: 11.5pt; font-weight: bold; }
-.contact-info { font-size: 10.5pt; line-height: 1.3; color: #555; }
-.contact-info a { color: #0066CC; text-decoration: underline; }
-.objective { text-align: justify; margin-bottom: 0.14in; line-height: 1.35; }
-.section-title { font-size: 13pt; font-weight: bold; color: #2E7D32; border-bottom: 1px solid #000; padding-bottom: 1pt; margin: 0.08in 0 0.08in; }
-.job { margin-bottom: 0.12in; }
-.job-header { display: flex; justify-content: space-between; align-items: baseline; gap: 10pt; margin-bottom: 3pt; }
-.job-title { font-weight: bold; }
-.job-date { font-style: italic; white-space: nowrap; }
-.bullets { list-style: none; padding-left: 0; line-height: 1.3; }
-.bullets li { position: relative; padding-left: 13pt; margin-bottom: 3pt; }
-.bullets li::before { content: "●"; position: absolute; left: 0; font-size: 8pt; top: 2pt; }
-.projects li::before { content: "○"; font-size: 9pt; top: 1pt; }
-.project-title { font-weight: bold; text-decoration: underline; }
-.skills { text-align: justify; line-height: 1.35; margin-bottom: 0.06in; }
-.degree-header { display: flex; justify-content: space-between; gap: 10pt; font-weight: bold; margin-bottom: 2pt; }
-.degree-date { font-style: italic; font-weight: normal; white-space: nowrap; }
-.education-item { margin-bottom: 0.1in; }
+@page { size: A4; margin: 0; }
+    
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 1.25;  
+            color: #000;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 0.35in;
+            background: white;
+            font-size: 12pt;
+        }
+        
+        .header {
+            margin-bottom: 0.2in;  
+        }
+        
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0.1in;
+        }
+        
+        .header-table td {
+            vertical-align: bottom;
+            padding: 0;
+        }
+        
+        .name-cell {
+            width: 18%;
+            padding-right: 0.6in;
+        }
+        
+        .location-cell {
+            width: 29%;
+            padding-right: 0.05in;
+        }
+        
+        .contact-cell {
+            width: 29%;
+            padding-right: 0.05in;
+        }
+        
+        .links-cell {
+            width: 30%;
+        }
+        
+        .name {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #2E7D32;
+            line-height: 0.8;
+            margin-bottom: 3pt;
+        }
+        
+        .professional-title {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #000;
+        }
+        
+        .contact-info {
+            font-size: 11.5pt;
+            line-height: 1.3;  
+            color: #666;
+        }
+        
+        .contact-info div {
+            margin-bottom: 1pt;
+        }
+        
+        .linkedin {
+            color: #0066CC;
+            text-decoration: underline;
+        }
+        
+        .objective {
+            font-size: 12pt;
+            text-align: justify;
+            margin-bottom: 0.18in;  
+            line-height: 1.4;  
+        }
+        
+        .section-title {
+            font-size: 13.5pt;
+            font-weight: bold;
+            color: #2E7D32;
+            margin-bottom: 0.1in;  
+            border-bottom: 1px solid #000;
+            padding-bottom: 1pt;
+            margin-top: 0.08in;  
+        }
+        
+        .job {
+            margin-bottom: 0.16in;  
+        }
+        
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 4pt;  
+        }
+        
+        .job-title {
+            font-size: 12pt;
+            font-weight: bold;
+        }
+        
+        .job-date {
+            font-size: 12pt;
+            font-style: italic;
+            text-align: right;
+        }
+        
+        .job-bullets {
+            font-size: 12pt;
+            padding-left: 0;
+            list-style: none;
+            line-height: 1.35;  
+        }
+        
+        .job-bullets li {
+            margin-bottom: 4pt;  
+            position: relative;
+            padding-left: 14pt;
+        }
+        
+        .job-bullets li:before {
+            content: "●";
+            position: absolute;
+            left: 0;
+        }
+        
+        .education-item {
+            margin-bottom: 0.12in;  
+        }
+        
+        .degree-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 12pt;
+            font-weight: bold;
+            margin-bottom: 4pt;
+        }
+        
+        .degree-date {
+            font-style: italic;
+        }
+        
+        .degree-details {
+            font-size: 12pt;
+            line-height: 1.35;  
+        }
+        
+        .skills-content {
+            font-size: 12pt;
+            line-height: 1.4;  
+            text-align: justify;
+            margin-bottom: 0.1in;  
+        }
+        
+        .skills-highlight {
+            font-style: italic;
+        }
+        
+        .projects-list {
+            font-size: 12pt;
+            padding-left: 0;
+            list-style: none;
+            line-height: 1.35;  
+        }
+        
+        .projects-list li {
+            margin-bottom: 6pt;  
+            position: relative;
+            padding-left: 14pt;
+        }
+        
+        .projects-list li:before {
+            content: "○";
+            position: absolute;
+            left: 0;
+        }
+        
+        .project-title {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        
+        .link-placeholder {
+            color: #0066CC;
+            text-decoration: underline;
+        }
+        html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        @media screen { body { width: 210mm; min-height: 297mm; box-sizing: border-box; } }
+        a { color: inherit; }
+        .contact-info a, .linkedin a { color: #0066CC; text-decoration: underline; }
+        .project-title a { color: #000; text-decoration: underline; font-weight: bold; }
+
 </style>
 </head>
 <body>
-<div class="header">
-  <div>
-    <div class="name"{{ dp('personal.name') }}>{{ personal.name }}</div>
-    {% if headline or editable %}<div class="professional-title"{{ dp('personal.headline') }}>{{ headline }}</div>{% endif %}
-  </div>
-  <div class="contact-info">
-    {% if personal.location %}<div{{ dp('personal.location') }}>{{ personal.location }}</div>{% endif %}
-    {% if personal.email %}<div{{ dp('personal.email') }}>{{ personal.email }}</div>{% endif %}
-    {% if personal.phone %}<div{{ dp('personal.phone') }}>{{ personal.phone }}</div>{% endif %}
-  </div>
-  <div class="contact-info">
-    {% if personal.linkedin %}<div><a href="https://{{ personal.linkedin | replace('https://', '') }}">{{ personal.linkedin | replace('https://', '') | replace('www.', '') }}</a></div>{% endif %}
-    {% if personal.github %}<div><a href="{{ personal.github }}">{{ personal.github | replace('https://', '') }}</a></div>{% endif %}
-  </div>
-</div>
+    {% set parts = personal.name.split(' ', 1) %}
+    <div class="header">
+        <table class="header-table">
+            <tr>
+                <td class="name-cell">
+                    <div class="name"{{ dp('personal.name') }}>{{ parts[0] }}{% if parts | length > 1 %}<br>{{ parts[1] }}{% endif %}</div>
+                    {% if headline or editable %}<div class="professional-title"{{ dp('personal.headline') }}>{{ headline }}</div>{% endif %}
+                </td>
+                <td class="location-cell contact-info">
+                    {% if personal.location %}<div>Location: <span{{ dp('personal.location') }}>{{ personal.location }}</span></div>{% endif %}
+                    {% if personal.birth_date %}<div>Date of birth: <span{{ dp('personal.birth_date') }}>{{ personal.birth_date }}</span></div>{% endif %}
+                </td>
+                <td class="contact-cell contact-info">
+                    {% if personal.phone %}<div>Number: <span{{ dp('personal.phone') }}>{{ personal.phone }}</span></div>{% endif %}
+                    {% if personal.email %}<div{{ dp('personal.email') }}>{{ personal.email }}</div>{% endif %}
+                </td>
+                <td class="links-cell contact-info">
+                    {% if personal.linkedin %}<div><span class="linkedin"><a href="{{ personal.linkedin if personal.linkedin.startswith('http') else 'https://' ~ personal.linkedin }}">LinkedIn</a></span></div>{% endif %}
+                    {% if personal.github %}<div><a href="{{ personal.github }}">GitHub</a></div>{% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
 
-{% if cv.summary or editable %}<div class="objective"{{ dp('summary') }}>{{ cv.summary }}</div>{% endif %}
+    {% if cv.summary or editable %}<div class="objective"{{ dp('summary') }}>{{ cv.summary }}</div>{% endif %}
 
-{% if cv.experience %}
-<div class="section-title">Work experience</div>
-{% for job in cv.experience %}{% set i = loop.index0 %}
-<div class="job">
-  <div class="job-header">
-    <div class="job-title">{% if job.company %}<span{{ dp('experience[%d].company' % i) }}>{{ job.company }}</span> | {% endif %}<span{{ dp('experience[%d].title' % i) }}>{{ job.title }}</span></div>
-    <div class="job-date"{{ dp('experience[%d].period' % i) }}>{{ job.period }}</div>
-  </div>
-  {% if job.bullets %}<ul class="bullets">{% for b in job.bullets %}<li{{ dp('experience[%d].bullets[%d]' % (i, loop.index0)) }}>{{ b }}</li>{% endfor %}</ul>{% endif %}
-</div>
-{% endfor %}
-{% endif %}
+    {% if cv.experience %}
+    <div class="section-title">Work experience</div>
+    {% for job in cv.experience %}{% set i = loop.index0 %}
+    <div class="job">
+        <div class="job-header">
+            <div class="job-title">{% if job.company %}<span{{ dp('experience[%d].company' % i) }}>{{ job.company }}</span> | {% endif %}<span{{ dp('experience[%d].title' % i) }}>{{ job.title }}</span></div>
+            <div class="job-date">{% if job.location %}<span{{ dp('experience[%d].location' % i) }}>{{ job.location }}</span> | {% endif %}<span{{ dp('experience[%d].period' % i) }}>{{ job.period }}</span></div>
+        </div>
+        {% if job.bullets %}<ul class="job-bullets">{% for b in job.bullets %}<li{{ dp('experience[%d].bullets[%d]' % (i, loop.index0)) }}>{{ b }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
 
-{% if cv.education %}
-<div class="section-title">Education</div>
-{% for e in cv.education %}{% set i = loop.index0 %}
-<div class="education-item">
-  <div class="degree-header"><span><span{{ dp('education[%d].degree' % i) }}>{{ e.degree }}</span>, <span{{ dp('education[%d].institution' % i) }}>{{ e.institution }}</span></span><span class="degree-date"{{ dp('education[%d].period' % i) }}>{{ e.period }}</span></div>
-  {% if e.gpa or e.details %}<div>{% if e.gpa %}GPA: {{ e.gpa }}{% endif %}{% if e.gpa and e.details %}. {% endif %}{{ e.details }}</div>{% endif %}
-</div>
-{% endfor %}
-{% endif %}
+    {% if cv.education %}
+    <div class="section-title">Education</div>
+    {% for e in cv.education %}{% set i = loop.index0 %}
+    <div class="education-item">
+        <div class="degree-header">
+            <div><span{{ dp('education[%d].institution' % i) }}>{{ e.institution }}</span> | <span{{ dp('education[%d].degree' % i) }}>{{ e.degree }}</span></div>
+            <div class="degree-date">{% if e.location %}<span{{ dp('education[%d].location' % i) }}>{{ e.location }}</span> | {% endif %}<span{{ dp('education[%d].period' % i) }}>{{ e.period }}</span></div>
+        </div>
+        {% if e.gpa or e.details %}<div class="degree-details">{% if e.gpa %}GPA: <span{{ dp('education[%d].gpa' % i) }}>{{ e.gpa }}</span>{% endif %}{% if e.gpa and e.details %}, {% endif %}{% if e.details %}<span{{ dp('education[%d].details' % i) }}>{{ e.details }}</span>{% endif %}</div>{% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
 
-{% if cv.skills %}
-<div class="section-title">Skills</div>
-<div class="skills">{% for s in cv.skills %}<span{{ dp('skills[%d].name' % loop.index0) }}>{{ s }}</span>{% if not loop.last %}, {% endif %}{% endfor %}{% if languages %}. <i>Languages:</i> {% for l in languages %}{{ l.name }}{% if l.level %} ({{ l.level }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</div>
-{% endif %}
+    {% if cv.skills %}
+    <div class="section-title">Skills</div>
+    <div class="skills-content">{% for s in cv.skills %}<span{{ dp('skills[%d].name' % loop.index0) }}>{{ s }}</span>{% if not loop.last %} • {% endif %}{% endfor %}{% if skills_note %} | <span class="skills-highlight"{{ dp('skills_note') }}>{{ skills_note }}</span>{% endif %}</div>
+    {% endif %}
 
-{% if cv.projects %}
-<div class="section-title">Projects</div>
-<ul class="bullets projects">
-{% for p in cv.projects %}{% set i = loop.index0 %}
-  <li><span class="project-title"{{ dp('projects[%d].name' % i) }}>{{ p.name }}</span>{% if p.description %}: <span{{ dp('projects[%d].description' % i) }}>{{ p.description }}</span>{% endif %}{% if p.tech %} <i>({{ p.tech | join(', ') }})</i>{% endif %}{% if p.link %} <a href="{{ p.link }}">{{ p.link | replace('https://', '') }}</a>{% endif %}</li>
-{% endfor %}
-</ul>
-{% endif %}
+    {% if cv.projects %}
+    <div class="section-title">Projects</div>
+    <ul class="projects-list">
+    {% for p in cv.projects %}{% set i = loop.index0 %}
+        <li><span class="project-title">{% if p.link %}<a href="{{ p.link }}"{{ dp('projects[%d].name' % i) }}>{{ p.name }}</a>{% else %}<span{{ dp('projects[%d].name' % i) }}>{{ p.name }}</span>{% endif %}</span>{% if p.description %}: <span{{ dp('projects[%d].description' % i) }}>{{ p.description }}</span>{% endif %}</li>
+    {% endfor %}
+    </ul>
+    {% endif %}
 </body>
 </html>

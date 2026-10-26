@@ -116,3 +116,48 @@ def test_completeness_checklist(tmp_path):
     p.verified = True
     assert any(i.label.startswith("Summary") and i.done for i in completeness(p))
     assert 0 <= sum(i.done for i in items) <= len(items)
+
+
+def test_import_jobkiller_html_reads_every_field(tmp_path):
+    store = ProfileStore(tmp_path)
+    store.save(make_profile())  # existing languages/search are kept
+    store.update("languages", [{"name": "English", "level": "C1"}])
+    p = store.import_jobkiller_html(Path(__file__).parent.parent / "fixtures" / "jobkiller_cv.html")
+    assert p.verified is False
+    assert p.personal.name == "Test Student" and p.personal.headline == "Data Engineer"
+    assert p.personal.location == "Netherlands" and p.personal.birth_date == "01-01-2003"
+    assert p.personal.phone == "+31600000000" and p.personal.email == "test@example.com"
+    assert p.personal.linkedin.endswith("/in/test-student") and p.personal.github == "https://github.com/teststudent"
+    assert p.summary.startswith("AI-focused student")
+    assert [(e.company, e.title, e.location, e.period) for e in p.experience] == [
+        ("Freelance", "Crypto Automation Engineer", "Netherlands", "2024 - Present"),
+        ("Freelance", "Full-Stack Web Developer", "Netherlands", "2023 - 2024"),
+    ]
+    assert p.experience[0].bullets[0].startswith("Developed automated trading bots") and len(p.experience[0].bullets) == 3
+    assert [(e.institution, e.degree, e.location, e.period, e.gpa) for e in p.education][1] == (
+        "MSHP Programming School", "Advanced Programming", "Moscow, Russia", "2020 - 2022", "10/10")
+    assert p.education[0].details.startswith("ongoing studies")
+    names = [s.name for s in p.skills]
+    assert names[:3] == ["Python", "Java", "React"] and "n8n workflows" in names and "TypeScript" in names and "C++" in names
+    assert p.skills_note == "All professional proficiency or above"
+    assert [(pr.name, pr.link) for pr in p.projects][0] == ("MCP for CV editing and generation", "https://github.com/teststudent/CV-MCP")
+    assert p.projects[1].description.startswith("Built AI chatbot")
+    assert p.languages[0].name == "English"
+
+
+def test_import_any_dispatches_by_extension(tmp_path):
+    store = ProfileStore(tmp_path)
+    fixtures = Path(__file__).parent.parent / "fixtures"
+    assert store.import_any(fixtures / "jobkiller_cv.html").personal.headline == "Data Engineer"
+    assert store.import_any(fixtures / "jobkiller_profile.json").personal.name == "Test Student"
+    with pytest.raises(ValueError, match=".txt"):
+        store.import_any(tmp_path / "x.txt")
+
+
+def test_language_strings_in_all_shapes():
+    from jobgent.profile.store import _language
+
+    assert (_language("English: B2–C1 (written and spoken)").name, _language("English: B2–C1 (written and spoken)").level) == ("English", "B2–C1 (written and spoken)")
+    assert (_language("Dutch (Beginner)").name, _language("Dutch (Beginner)").level) == ("Dutch", "Beginner")
+    assert (_language("Russian - Native").name, _language("Russian - Native").level) == ("Russian", "Native")
+    assert _language("German").name == "German"
