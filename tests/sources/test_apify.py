@@ -46,3 +46,23 @@ def test_unauthorized_raises_source_error_naming_apify():
         m.post(url__startswith="https://api.apify.com/").mock(return_value=httpx.Response(401, text="nope"))
         with httpx.Client() as client, pytest.raises(SourceError, match="APIFY"):
             src.fetch(client)
+
+
+def test_short_dutch_city_names_are_expanded_for_linkedin():
+    src = ApifyLinkedInSource(token="t", keywords=["AI intern"], locations=["Amsterdam", "the hague", "Berlin, Germany"])
+    with respx.mock as m:
+        route = m.post(url__startswith="https://api.apify.com/").mock(return_value=httpx.Response(200, json=[]))
+        with httpx.Client() as client:
+            src.fetch(client)
+    sent = [json.loads(c.request.content)["location"] for c in route.calls]
+    assert sent == ["Amsterdam, North Holland, Netherlands", "The Hague, South Holland, Netherlands", "Berlin, Germany"]
+
+
+def test_job_id_taken_from_slugged_links():
+    src = ApifyLinkedInSource(token="t", keywords=["a"], locations=["x"])
+    item = {"id": "999", "title": "T", "companyName": "C", "link": "https://nl.linkedin.com/jobs/view/ml-engineering-intern-4466885587?trk=x"}
+    with respx.mock as m:
+        m.post(url__startswith="https://api.apify.com/").mock(return_value=httpx.Response(200, json=[item]))
+        with httpx.Client() as client:
+            jobs = src.fetch(client)
+    assert jobs[0].external_id == "4466885587"

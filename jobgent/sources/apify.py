@@ -13,7 +13,26 @@ from jobgent.errors import SourceError
 from jobgent.sources.base import RawJob, html_to_text
 
 JsonDict = dict[str, object]
-_JOB_ID = re.compile(r"/jobs/view/(\d+)")
+_JOB_ID = re.compile(r"/jobs/view/(?:[^/?#]*-)?(\d+)")
+
+# LinkedIn only recognises full place names ("Amsterdam" alone returns nothing).
+LINKEDIN_PLACES = {
+    "amsterdam": "Amsterdam, North Holland, Netherlands",
+    "rotterdam": "Rotterdam, South Holland, Netherlands",
+    "the hague": "The Hague, South Holland, Netherlands",
+    "den haag": "The Hague, South Holland, Netherlands",
+    "utrecht": "Utrecht, Utrecht, Netherlands",
+    "eindhoven": "Eindhoven, North Brabant, Netherlands",
+    "delft": "Delft, South Holland, Netherlands",
+    "leiden": "Leiden, South Holland, Netherlands",
+    "haarlem": "Haarlem, North Holland, Netherlands",
+    "groningen": "Groningen, Groningen, Netherlands",
+    "nl": "Netherlands",
+}
+
+
+def linkedin_place(location: str) -> str:
+    return LINKEDIN_PLACES.get(location.strip().lower(), location)
 
 
 def _first(d: JsonDict, *keys: str) -> str:
@@ -54,7 +73,7 @@ class ApifyLinkedInSource:
         url = f"https://api.apify.com/v2/acts/{self.actor}/run-sync-get-dataset-items"
         payload: JsonDict = {
             "keywords": keyword,
-            "location": location,
+            "location": linkedin_place(location),
             "limitPerSource": self.max_per_query,
             "datePosted": "pastMonth",
             "scrapeCompany": False,

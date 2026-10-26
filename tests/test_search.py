@@ -16,7 +16,7 @@ def test_search_runs_linkedin_now_and_returns_matching_jobs(services):
         route = m.post(url__startswith="https://api.apify.com/").mock(return_value=httpx.Response(200, json=FIX))
         result = search_jobs(services, "AI intern", "Amsterdam")
     body = json.loads(route.calls[0].request.content)
-    assert body["keywords"] == "AI intern" and body["location"] == "Amsterdam"
+    assert body["keywords"] == "AI intern" and body["location"] == "Amsterdam, North Holland, Netherlands"
     assert result.fetched == 2 and result.source_error is None
     titles = [j.title for j in result.jobs]
     assert "Data Science Intern" in titles  # Amsterdam, from LinkedIn
