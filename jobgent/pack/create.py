@@ -10,12 +10,14 @@ from pathlib import Path
 
 import yaml
 from pydantic import BaseModel
+from pypdf.errors import PdfReadError
 from sqlalchemy.orm import Session
 
 from jobgent.config import Settings
 from jobgent.db import Job, Status
 from jobgent.errors import InventedClaimError, JobgentError, ProfileNotVerifiedError
 from jobgent.llm import LLM
+from jobgent.pack.ats_pdf import AtsPdfCheck, ats_check_text, keyword_buckets, pdf_text
 from jobgent.pack.factguard import banned_phrases, fact_check, tidy_letter
 from jobgent.pack.letter import CoverLetter, write_letter
 from jobgent.pack.pdf import html_to_pdf
@@ -47,6 +49,9 @@ class PackResult(BaseModel):
     review_notes: dict[str, str] = {}
     check_this: list[str] = []
     tone: str = "warm"
+    ats_ok: bool = True
+    ats_problems: list[str] = []
+    keywords: dict[str, list[str]] = {}
 
 
 def slugify(text: str) -> str:
@@ -129,6 +134,13 @@ def create_pack(
     letter_path.write_text(letter.body)
     (out_dir / "job_posting.md").write_text(f"# {job.title} at {job.company}\n\n{job.url}\n\nArchived {datetime.now():%Y-%m-%d}\n\n{job.description}")
 
+    try:
+        text_layer = pdf_text(cv_pdf_path)
+        ats = ats_check_text(text_layer, profile.personal.email, profile.personal.phone)
+    except PdfReadError as e:
+        text_layer, ats = "", AtsPdfCheck(ok=False, problems=[f"Could not read the PDF text layer: {e}"])
+    buckets = keyword_buckets(text_layer, corpus, job.match.keywords) if job.match and job.match.keywords else {}
+
     email_match = _EMAIL.search(html_to_text(job.description))
     result = PackResult(
         job_id=job.id,
@@ -145,6 +157,9 @@ def create_pack(
         review_notes={k: getattr(review, k) for k in ("missed_keywords", "company_angle", "passive_phrasing", "tone")},
         check_this=check_this,
         tone=tone,
+        ats_ok=ats.ok,
+        ats_problems=ats.problems,
+        keywords=buckets,
     )
     (out_dir / "meta.json").write_text(json.dumps(result.model_dump(mode="json"), indent=2))
     (out_dir / "cv.json").write_text(cv.model_dump_json(indent=2))

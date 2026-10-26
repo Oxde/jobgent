@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 from typing import get_args, get_origin
 
@@ -15,6 +16,7 @@ from jobgent.ats import AtsReport, ats_report
 from jobgent.dashboard import Column, HomeData, applications_board, home_data
 from jobgent.db import Status
 from jobgent.errors import JobgentError, MissingSecretError
+from jobgent.evaluate import evaluate_job
 from jobgent.pack.create import PackResult, create_pack, load_pack, pack_dir_for
 from jobgent.pack.pdf import html_to_pdf
 from jobgent.pack.render import EDITABLE_TEMPLATES, TemplateInfo, list_templates, render_cv_html, template_file
@@ -107,12 +109,24 @@ class Dim(BaseModel):
     max: int
 
 
+class EvaluationView(BaseModel):
+    verdict: str
+    verdict_reason: str
+    summary: str
+    deadline: str | None
+    coverage: int
+    gates: list[dict[str, str]]
+    requirements: list[dict[str, str]]
+    created_at: datetime
+
+
 class JobPage(BaseModel):
     job: JobDetail
     dims: list[Dim] | None
     ats: AtsReport | None
     pack: PackResult | None
     letter: str | None
+    evaluation: EvaluationView | None = None
 
 
 class StatusBody(BaseModel):
@@ -225,8 +239,24 @@ def build_api(services: Services) -> APIRouter:
                 dims = [Dim(name="Skills", value=m.skills, max=50), Dim(name="Role", value=m.role, max=20),
                         Dim(name="Language & location", value=m.lang_loc, max=15), Dim(name="Timing", value=m.timing, max=15)]
             pack = load_pack(services.settings, db_job) if (pack_dir_for(services.settings, db_job) / "meta.json").is_file() else None
+            evaluation = EvaluationView.model_validate(db_job.evaluation, from_attributes=True) if db_job.evaluation else None
         letter = pack.letter_md.read_text() if pack and pack.letter_md.is_file() else None
-        return JobPage(job=job, dims=dims, ats=_ats_for(job_id), pack=pack, letter=letter)
+        return JobPage(job=job, dims=dims, ats=_ats_for(job_id), pack=pack, letter=letter, evaluation=evaluation)
+
+    @api.post("/jobs/{job_id}/evaluate")
+    def evaluate(job_id: int, check_open: bool = True) -> EvaluationView:
+        profile = services.store.load()
+        try:
+            llm = services.llm_factory()
+        except MissingSecretError as e:
+            raise _bad(e) from e
+        with services.sessionmaker() as s, services.http_client_factory() as client:
+            try:
+                db_job = get_job(s, job_id)
+            except JobgentError as e:
+                raise HTTPException(status_code=404, detail=str(e)) from e
+            ev = evaluate_job(s, llm, services.settings.fast_model, profile, db_job, client if check_open else None)
+            return EvaluationView.model_validate(ev, from_attributes=True)
 
     @api.get("/jobs/{job_id}/cv", response_class=HTMLResponse)
     def job_cv(job_id: int) -> HTMLResponse:

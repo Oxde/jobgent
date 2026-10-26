@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -14,6 +15,7 @@ from jobgent.profile.models import Profile
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 DEFAULT_TEMPLATE = Path(__file__).parent / "default_cv.html"
 DEFAULT_TEMPLATE_ID = "default"
+_DATE_DASH = re.compile(r"(\d{4})\s*[\u2013\u2014]\s*")
 
 
 class TemplateInfo(BaseModel):
@@ -78,7 +80,7 @@ def render_cv_html(
 
     env.globals["pidx"] = pidx
     template = env.get_template(path.name)
-    return template.render(
+    html = template.render(
         personal=profile.personal,
         headline=profile.personal.headline,
         skills_note=profile.skills_note,
@@ -88,3 +90,5 @@ def render_cv_html(
         certifications=[],
         editable=editable,
     )
+    # ATS: some systems (e.g. Workday) drop en/em dashes in date ranges; print plain hyphens.
+    return _DATE_DASH.sub(r"\1 - ", html)

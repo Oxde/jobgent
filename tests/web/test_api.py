@@ -173,3 +173,21 @@ def test_section_specs_expose_hidden_as_a_checkbox(services):
     specs = {s["key"]: {f["name"]: f["kind"] for f in s["fields"]} for s in client(services).get("/api/profile").json()["sections"]}
     assert specs["experience"]["hidden"] == "bool" and specs["education"]["hidden"] == "bool" and specs["projects"]["hidden"] == "bool"
     assert specs["experience"]["bullets"] == "lines" and specs["skills"]["name"] == "text"
+
+
+def test_evaluate_endpoint_and_job_page_include_the_evaluation(services):
+    from jobgent.evaluate import Extracted, Mapped, Mapping, Requirement
+    from jobgent.score import ScoreOutput
+
+    services.store.update("preferences.eu_citizen", True)
+    fake = FakeLLM([Extracted(summary="AI intern", requirements=[Requirement(text="Python", importance="critical")]),
+                    Mapped(items=[Mapping(index=0, evidence_kind="none")]),
+                    ScoreOutput(skills=40, role=18, lang_loc=14, timing=10, reasons=["r"], gaps=["g"], keywords=["Python"])])
+    services.llm_factory = lambda: fake
+    c = client(services)
+    r = c.post("/api/jobs/1/evaluate")
+    assert r.status_code == 200, r.text
+    ev = r.json()
+    assert ev["verdict"] == "consider" and ev["requirements"][0]["status"] == "gap" and {g["name"] for g in ev["gates"]} >= {"language", "location"}
+    page = c.get("/api/jobs/1").json()
+    assert page["evaluation"]["verdict"] == "consider"

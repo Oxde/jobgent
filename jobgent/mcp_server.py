@@ -14,6 +14,7 @@ from jobgent.errors import JobgentError
 
 from jobgent.classify import classify_jobs
 from jobgent.db import Status
+from jobgent.evaluate import evaluate_job
 from jobgent.fetch import FetchSummary, fetch_all
 from jobgent.pack.create import PackResult, create_pack, load_pack
 from jobgent.guides import cv_writing_guide
@@ -211,6 +212,18 @@ def build_mcp(services: Services) -> FastMCP:
             if job.is_internship and job.language in profile.search.languages and not job.dutch_required:
                 score_job(s, llm, services.settings.fast_model, profile, job)
             return detail(job)
+
+    @mcp.tool()
+    @in_thread
+    def job_evaluate(job_id: int) -> dict[str, object]:
+        """Full evaluation of one posting: checks it is still open, runs the gates (language, location, work rights,
+        red flags, integrity), builds the requirement → evidence table (covered / partial / gap, decided by code) and
+        returns a verdict apply / consider / skip with the reason. Use before pack_create."""
+        profile = services.store.load()
+        llm = services.llm_factory()
+        with services.sessionmaker() as s, services.http_client_factory() as client:
+            ev = evaluate_job(s, llm, services.settings.fast_model, profile, get_job(s, job_id), client)
+            return {k: getattr(ev, k) for k in ("verdict", "verdict_reason", "summary", "deadline", "coverage", "gates", "requirements")}
 
     @mcp.tool()
     @in_thread

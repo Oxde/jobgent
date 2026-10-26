@@ -148,3 +148,11 @@ def test_note_tone_and_facts_reach_the_letter(tmp_path):
         create_pack(settings, s, llm, store, job_id=1, pdf=FakePdf([1]))
     system, user = llm.prompts[1]
     assert "I met their CTO" in user and "Available from 1 February 2027" in user and "Direct" in system
+
+
+def test_pack_records_the_pdf_ats_check(tmp_path):
+    settings, store, Session = setup(tmp_path, verified=True)
+    with Session() as s:
+        r = create_pack(settings, s, FakeLLM(responses()), store, job_id=1, pdf=FakePdf([1]))
+    # the fake PDF has no text layer, so the check must say so instead of crashing
+    assert r.ats_ok is False and any("read" in p.lower() for p in r.ats_problems)

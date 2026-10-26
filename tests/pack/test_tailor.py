@@ -177,3 +177,13 @@ def test_times_header_matches_the_2025_layout():
     text = " ".join(_re.sub(r"<[^>]+>", "", html).split())
     assert "Location: Netherlands" in text and "Date of birth: 01-01-2003" in text and "Number: +31600000000" in text
     assert '>LinkedIn</a>' in html and '>GitHub</a>' in html and "<table" not in html
+
+
+def test_rendered_date_ranges_use_plain_hyphens():
+    from jobgent.pack.render import render_cv_html
+    from jobgent.pack.tailor import general_cv
+
+    p = profile()
+    p.experience = [Experience(company="A", title="B", period="Sep 2025 – Feb 2026", bullets=["x"])]
+    html = render_cv_html(p, general_cv(p), None, "times")
+    assert "Sep 2025 - Feb 2026" in html and "2025 –" not in html
