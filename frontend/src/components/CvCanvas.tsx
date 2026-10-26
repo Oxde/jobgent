@@ -46,7 +46,7 @@ export default function CvCanvas({ template, editable, src: fixedSrc }: { templa
     return () => { alive = false; clearInterval(id); };
   }, [reload, bumpProfile]);
 
-  useEffect(() => { reload(); }, [template, reload]);
+  useEffect(() => { reload(); }, [template, fixedSrc, reload]);
 
   // Messages from the editable page.
   useEffect(() => {

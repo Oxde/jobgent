@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { api, type Card, type Column, type Status } from "../lib/api";
 import { useLoad, useStore } from "../lib/store";
 import { Empty, ErrorNote, JobLink, STATUS_LABEL } from "./ui";
+import { useToast } from "./Toast";
 
 /** When the last drag ended; a click right after a drop must not open the card. */
 const LastDrag = createContext<{ current: number }>({ current: 0 });
@@ -13,6 +14,7 @@ const DROPPABLE: Record<string, Status | undefined> = { liked: "liked", pack_rea
 
 export default function Pipeline() {
   const { refreshStats } = useStore();
+  const toast = useToast();
   const { data, error, reload } = useLoad(() => api.applications(), []);
   const [list, setList] = useState(false);
   const [moving, setMoving] = useState<number | null>(null);
@@ -25,6 +27,9 @@ export default function Pipeline() {
       await api.setStatus(jobId, status);
       refreshStats();
       reload();
+      toast.show(status === "interview" ? "Moved to Interviewing. Add the date on the job page." : `Moved to ${STATUS_LABEL[status]}`, {
+        undo: async () => { await api.undoStatus(jobId); reload(); refreshStats(); },
+      });
     } finally {
       setMoving(null);
     }

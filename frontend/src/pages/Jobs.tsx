@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api, STATUSES, type JobSummary, type Status } from "../lib/api";
 import { useLoad, useStore } from "../lib/store";
-import { Empty, ErrorNote, JobLink, PageHead, Score, STATUS_LABEL, StatusTag } from "../components/ui";
+import { Empty, ErrorNote, JobLink, PageHead, Score, STATUS_LABEL, StatusTag, UrgencyTags, VerdictChip } from "../components/ui";
+import { useToast } from "../components/Toast";
 import Pipeline from "../components/Pipeline";
 
 export default function Jobs() {
@@ -26,6 +27,7 @@ export default function Jobs() {
 
 function Find() {
   const { refreshStats } = useStore();
+  const toast = useToast();
   const [q, setQ] = useState("");
   const [minScore, setMinScore] = useState(0);
   const [status, setStatus] = useState("");
@@ -35,6 +37,7 @@ function Find() {
     await api.setStatus(job.id, s);
     refreshStats();
     reload();
+    toast.show(s === "skipped" ? `Skipped: ${job.title}` : `Saved: ${job.title}`, { undo: async () => { await api.undoStatus(job.id); reload(); refreshStats(); } });
   }
 
   return (
@@ -62,7 +65,10 @@ function Find() {
             {data.map((j) => (
               <tr key={j.id} className="border-t border-line">
                 <td className="py-2 pl-2 pr-3"><JobLink id={j.id}><Score value={j.score} /></JobLink></td>
-                <td className="py-2 pr-3"><JobLink id={j.id} className="font-semibold text-[14.5px]">{j.title}</JobLink> <StatusTag status={j.status} /></td>
+                <td className="py-2 pr-3">
+                  <JobLink id={j.id} className="font-semibold text-[14.5px]">{j.title}</JobLink>
+                  <span className="ml-1.5 inline-flex flex-wrap gap-1 align-middle"><VerdictChip verdict={j.verdict} /><StatusTag status={j.status} /><UrgencyTags deadline={j.deadline} ageDays={j.age_days} alsoIn={j.also_in} /></span>
+                </td>
                 <td className="py-2 pr-3">{j.company}</td>
                 <td className="py-2 pr-3 text-text-2">{j.location ?? ""}</td>
                 <td className="py-2 pr-3 text-text-2">{j.posted_at ? new Date(j.posted_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : ""}</td>

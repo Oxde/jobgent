@@ -41,3 +41,28 @@ export function ErrorNote({ message }: { message: string | null }) {
 export function JobLink({ id, children, className = "" }: { id: number; children: ReactNode; className?: string }) {
   return <Link to={`/jobs/${id}`} className={`hover:underline ${className}`}>{children}</Link>;
 }
+
+export function VerdictChip({ verdict }: { verdict: "apply" | "consider" | "skip" | null }) {
+  if (!verdict) return null;
+  const style = { apply: "text-ok bg-ok/10 border-ok/40", consider: "text-warn bg-warn/10 border-warn/40", skip: "text-text-3 bg-bg-3 border-line-2" }[verdict];
+  const label = { apply: "Apply", consider: "Consider", skip: "Skip" }[verdict];
+  return <span className={`inline-block rounded-md border px-2 py-0.5 text-[11.5px] font-semibold ${style}`}>{label}</span>;
+}
+
+export function daysUntil(deadline: string | null): number | null {
+  if (!deadline) return null;
+  const d = new Date(deadline);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.ceil((d.getTime() - Date.now()) / 86400000);
+}
+
+export function UrgencyTags({ deadline, ageDays, alsoIn }: { deadline: string | null; ageDays: number | null; alsoIn?: number }) {
+  const left = daysUntil(deadline);
+  return (
+    <>
+      {left !== null && left >= 0 && left <= 7 && <span className="tag bg-bad/10 text-bad" title={`Deadline ${deadline}`}>🔥 {left === 0 ? "closes today" : `${left}d left`}</span>}
+      {ageDays !== null && ageDays > 30 && <span className="tag bg-warn/10 text-warn" title="Posted more than 30 days ago; may be filled">⚠ {ageDays}d old</span>}
+      {alsoIn ? <span className="tag" title="Same posting in other cities">+{alsoIn} {alsoIn === 1 ? "city" : "cities"}</span> : null}
+    </>
+  );
+}

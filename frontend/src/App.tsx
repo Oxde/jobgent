@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { StoreProvider, useStore } from "./lib/store";
+import { ToastProvider } from "./components/Toast";
 import Sidebar from "./components/Sidebar";
 import Assistant from "./components/Assistant";
 import Home from "./pages/Home";
@@ -31,7 +32,9 @@ function Shell() {
 export default function App() {
   return (
     <StoreProvider>
-      <Shell />
+      <ToastProvider>
+        <Shell />
+      </ToastProvider>
     </StoreProvider>
   );
 }
