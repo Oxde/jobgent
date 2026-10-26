@@ -272,6 +272,9 @@
     <div class="section-title">Skills</div>
     <div class="skills-content">{% for category, items in skill_groups %}{% if category %}<b{% if editable and items[0][1] >= 0 %}{{ dp('skills[%d].category' % items[0][1]) }}{% endif %}>{{ category }}</b>: {% endif %}{% for name, idx in items %}<span{% if idx >= 0 %}{{ dp('skills[%d].name' % idx) }}{% endif %}>{{ name }}</span>{% if not loop.last %} • {% endif %}{% endfor %}{% if not loop.last %} | {% endif %}{% endfor %}{% if skills_note %} | <span class="skills-highlight"{{ dp('skills_note') }}>{{ skills_note }}</span>{% endif %}</div>
     {% endif %}
+    {% if languages %}
+    <div class="skills-content"><b>Languages</b>: {% for l in languages %}<span{{ dp('languages[%d].name' % loop.index0) }}>{{ l.name }}</span>{% if l.level %} (<span{{ dp('languages[%d].level' % loop.index0) }}>{{ l.level }}</span>){% endif %}{% if not loop.last %} • {% endif %}{% endfor %}</div>
+    {% endif %}
 
     {% if cv.projects %}
     <div class="section-title">Projects</div>

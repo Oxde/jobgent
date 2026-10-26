@@ -120,7 +120,7 @@ def build_mcp(services: Services) -> FastMCP:
         tid = template or profile.preferences.template
         html = render_cv_html(profile, general_cv(profile), services.store.master_cv_path(), tid)
         out = services.settings.home / "cv" / f"cv-{tid}.pdf"
-        pages = html_to_pdf(html, out)
+        pages = html_to_pdf(html, out, fit=True)
         return f"{out} ({pages} page{'s' if pages != 1 else ''})"
 
     @mcp.tool()

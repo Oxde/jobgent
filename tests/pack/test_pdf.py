@@ -54,3 +54,23 @@ def test_full_times_cv_fits_one_a4_page(tmp_path):
     except RuntimeError as e:
         pytest.skip(str(e))
     assert pages == 1
+
+
+def test_fit_shrinks_a_slight_overflow_to_one_page(tmp_path):
+    pytest.importorskip("playwright")
+    html = "<html><head><style>@page{size:A4;margin:0}body{margin:0;padding:12mm;font-size:12pt}</style></head><body>" + "<p>line</p>" * 32 + "</body></html>"
+    try:
+        plain = html_to_pdf(html, tmp_path / "a.pdf")
+        fitted = html_to_pdf(html, tmp_path / "b.pdf", fit=True)
+    except RuntimeError as e:
+        pytest.skip(str(e))
+    assert plain == 2 and fitted == 1
+
+
+def test_fit_gives_up_on_real_two_page_content(tmp_path):
+    pytest.importorskip("playwright")
+    html = "<html><body>" + "<p style='page-break-after: always'>a</p><p>b</p></body></html>"
+    try:
+        assert html_to_pdf(html, tmp_path / "c.pdf", fit=True) == 2
+    except RuntimeError as e:
+        pytest.skip(str(e))

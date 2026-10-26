@@ -61,7 +61,7 @@ def create_pack(
     llm: LLM,
     store: ProfileStore,
     job_id: int,
-    pdf: Callable[[str, Path], int] = html_to_pdf,
+    pdf: Callable[[str, Path], int] = lambda html, out: html_to_pdf(html, out, fit=True),
 ) -> PackResult:
     job = session.get(Job, job_id)
     if job is None:

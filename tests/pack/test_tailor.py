@@ -125,3 +125,15 @@ def test_times_header_is_ats_safe():
     assert "<table" not in html
     assert "linkedin.com/in/test-student" in html and "github.com/teststudent" in html
     assert "01-01-2003" not in html
+
+
+def test_times_prints_languages():
+    from jobgent.pack.render import render_cv_html
+    from jobgent.pack.tailor import general_cv
+    from jobgent.profile.models import Language
+
+    p = profile()
+    p.languages = [Language(name="English", level="C1"), Language(name="Russian", level="Native")]
+    html = render_cv_html(p, general_cv(p), None, "times", editable=True)
+    assert "Languages" in html and "Russian" in html and "Native" in html
+    assert 'data-path="languages[1].name"' in html

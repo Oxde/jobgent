@@ -74,7 +74,8 @@ export default function CvCanvas({ template, editable, src: fixedSrc }: { templa
   function onLoad() {
     const doc = frame.current?.contentDocument;
     if (!doc) return;
-    setHeight(Math.max(A4_H, doc.documentElement.scrollHeight));
+    // Measure the page itself (body box incl. padding), not the frame: the frame never shrinks on its own.
+    setHeight(Math.max(A4_H, Math.ceil(doc.body.getBoundingClientRect().height)));
     doc.addEventListener("focusin", () => { editing.current = true; });
     doc.addEventListener("focusout", () => { editing.current = false; });
   }
@@ -96,7 +97,8 @@ export default function CvCanvas({ template, editable, src: fixedSrc }: { templa
           className="block border-0 bg-white shadow-[0_8px_40px_rgba(0,0,0,.45)]"
         />
       </div>
-      {pages > 1 && <p className="mt-3 text-center text-[12.5px] text-warn">This CV runs to {pages} pages. Aim for one: ask the chat to shorten it.</p>}
+      {height > A4_H + 40 && <p className="mt-3 text-center text-[12.5px] text-warn">This CV runs to {pages} pages. Aim for one: ask the chat to shorten it, or drop an older job or project.</p>}
+      {height > A4_H && height <= A4_H + 40 && <p className="mt-3 text-center text-[12.5px] text-text-3">Slightly over one page; the PDF prints it a little smaller so it stays on one page.</p>}
       {toast && (
         <div role="status" className={`fixed bottom-5 right-5 z-20 rounded-lg px-3 py-2 text-[13px] shadow-lg ${toast.kind === "ok" ? "bg-ok text-bg" : "bg-bad text-bg"}`}>{toast.text}</div>
       )}

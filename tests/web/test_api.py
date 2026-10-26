@@ -143,7 +143,10 @@ def test_editable_preview_and_profile_version(services):
 def test_cv_pdf_download(services, monkeypatch):
     import jobgent.web.app as webapp
 
-    def fake_pdf(html: str, out):
+    calls = []
+
+    def fake_pdf(html: str, out, fit: bool = False):
+        calls.append(fit)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_bytes(b"%PDF-1.4 fake")
         return 1
@@ -152,6 +155,7 @@ def test_cv_pdf_download(services, monkeypatch):
     r = client(services).get("/api/cv/pdf?template=times")
     assert r.status_code == 200 and r.headers["content-type"] == "application/pdf" and r.content.startswith(b"%PDF")
     assert client(services).get("/api/cv/pdf?template=nope").status_code == 400
+    assert calls == [True]
 
 
 def test_job_cv_preview_falls_back_to_general_cv(services):

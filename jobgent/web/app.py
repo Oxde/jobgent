@@ -355,7 +355,7 @@ def build_api(services: Services) -> APIRouter:
         html = render_cv_html(profile, general_cv(profile), services.store.master_cv_path(), tid)
         out = services.settings.home / "cv" / f"cv-{tid}.pdf"
         try:
-            html_to_pdf(html, out)
+            html_to_pdf(html, out, fit=True)
         except RuntimeError as e:
             raise HTTPException(status_code=500, detail=str(e)) from e
         name = (profile.personal.name or "cv").replace(" ", "_")
