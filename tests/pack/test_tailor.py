@@ -123,8 +123,7 @@ def test_times_header_is_ats_safe():
     html = render_cv_html(p, general_cv(p), None, "times")
     head = html[html.index('<div class="header">'):html.index("</div>\n    </div>") if "</div>\n    </div>" in html else len(html)]
     assert "<table" not in html
-    assert "linkedin.com/in/test-student" in html and "github.com/teststudent" in html
-    assert "01-01-2003" not in html
+    assert 'href="https://www.linkedin.com/in/test-student"' in html and 'href="https://github.com/teststudent"' in html
 
 
 def test_times_prints_languages():
@@ -137,3 +136,44 @@ def test_times_prints_languages():
     html = render_cv_html(p, general_cv(p), None, "times", editable=True)
     assert "Languages" in html and "Russian" in html and "Native" in html
     assert 'data-path="languages[1].name"' in html
+
+
+def test_hidden_items_stay_in_profile_but_not_on_the_general_cv():
+    from jobgent.pack.render import render_cv_html
+    from jobgent.pack.tailor import general_cv
+
+    p = profile()
+    p.experience = [Experience(company="New Co", title="Intern", bullets=["new"]), Experience(company="Old Co", title="Dev", bullets=["old"], hidden=True)]
+    p.education = [Education(institution="Uni", degree="Math"), Education(institution="School", degree="Coding", hidden=True)]
+    cv = general_cv(p)
+    assert [e.company for e in cv.experience] == ["New Co"] and [e.institution for e in cv.education] == ["Uni"]
+    html = render_cv_html(p, cv, None, "times", editable=True)
+    assert "Old Co" not in html and "School" not in html
+
+
+def test_edit_paths_point_at_profile_positions_when_items_are_hidden():
+    from jobgent.pack.render import render_cv_html
+    from jobgent.pack.tailor import general_cv
+
+    p = profile()
+    p.experience = [Experience(company="Old Co", title="Dev", bullets=["old"], hidden=True), Experience(company="New Co", title="Intern", bullets=["new"])]
+    for tid in ("times", "default"):
+        html = render_cv_html(p, general_cv(p), None, tid, editable=True)
+        assert 'data-path="experience[1].bullets[0]"' in html and 'data-path="experience[0].bullets[0]"' not in html, tid
+
+
+def test_times_header_matches_the_2025_layout():
+    from jobgent.pack.render import render_cv_html
+    from jobgent.pack.tailor import general_cv
+
+    p = profile()
+    p.personal.location = "Netherlands"
+    p.personal.birth_date = "01-01-2003"
+    p.personal.phone = "+31600000000"
+    p.personal.linkedin = "https://www.linkedin.com/in/test"
+    p.personal.github = "https://github.com/test"
+    html = render_cv_html(p, general_cv(p), None, "times")
+    import re as _re
+    text = " ".join(_re.sub(r"<[^>]+>", "", html).split())
+    assert "Location: Netherlands" in text and "Date of birth: 01-01-2003" in text and "Number: +31600000000" in text
+    assert '>LinkedIn</a>' in html and '>GitHub</a>' in html and "<table" not in html

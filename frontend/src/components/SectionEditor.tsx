@@ -8,14 +8,14 @@ function toForm(fields: SectionSpec["fields"], item?: Item): Record<string, stri
   const out: Record<string, string> = {};
   for (const f of fields) {
     const v = item?.[f.name];
-    out[f.name] = f.kind === "lines" ? (Array.isArray(v) ? v.join("\n") : "") : v == null ? "" : String(v);
+    out[f.name] = f.kind === "lines" ? (Array.isArray(v) ? v.join("\n") : "") : f.kind === "bool" ? (v ? "true" : "") : v == null ? "" : String(v);
   }
   return out;
 }
 
 function fromForm(fields: SectionSpec["fields"], form: Record<string, string>): Item {
   const out: Item = {};
-  for (const f of fields) out[f.name] = f.kind === "lines" ? form[f.name].split("\n").map((l) => l.trim()).filter(Boolean) : form[f.name].trim();
+  for (const f of fields) out[f.name] = f.kind === "lines" ? form[f.name].split("\n").map((l) => l.trim()).filter(Boolean) : f.kind === "bool" ? form[f.name] === "true" : form[f.name].trim();
   return out;
 }
 
@@ -30,7 +30,13 @@ function ItemForm({ spec, initial, onSubmit, onDelete, submitLabel }: { spec: Se
   }
   return (
     <form onSubmit={submit} className={`grid gap-2 border-t border-line px-3 py-3 ${initial ? "" : "bg-bg"}`}>
-      {spec.fields.map((f) => (
+      {spec.fields.filter((f) => f.kind === "bool").map((f) => (
+        <label key={f.name} className="flex items-center gap-2 text-[13px] text-text-2">
+          <input type="checkbox" className="h-4 w-4 accent-[var(--color-accent)]" checked={form[f.name] === "true"} onChange={(e) => setForm({ ...form, [f.name]: e.target.checked ? "true" : "" })} />
+          {f.name === "hidden" ? "Hide on the CV (stays in your profile)" : f.name}
+        </label>
+      ))}
+      {spec.fields.filter((f) => f.kind !== "bool").map((f) => (
         <label key={f.name} className="grid gap-1">
           <span className="label mb-0 capitalize">{f.name.replace("_", " ")}</span>
           {f.kind === "lines"

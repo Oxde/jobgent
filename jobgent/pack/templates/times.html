@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-{% macro dp(p) %}{% if editable %} data-path="{{ p }}"{% endif %}{% endmacro %}
+{% macro dp(p) %}{% if editable and '[-1]' not in p %} data-path="{{ p }}"{% endif %}{% endmacro %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -28,9 +28,7 @@
             margin-bottom: 0.2in;  
         }
         
-        .header-row { display: flex; align-items: flex-end; gap: 0.3in; }
-        .header-row > .contact-info { flex: 1 1 auto; }
-        .header-row > .name-cell { flex: 0 0 auto; padding-right: 0.2in; }
+        .header-row { display: grid; grid-template-columns: auto 1.25fr 1.25fr 0.8fr; column-gap: 0.25in; align-items: end; }
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -217,7 +215,7 @@
 
 
         .header-row .name-cell { width: auto; white-space: nowrap; padding-right: 0.25in; }
-        .header-row .contact-info { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .header-row .contact-info { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -228,14 +226,17 @@
                 <div class="name"{{ dp('personal.name') }}>{{ parts[0] }}{% if parts | length > 1 %}<br>{{ parts[1] }}{% endif %}</div>
                 {% if headline or editable %}<div class="professional-title"{{ dp('personal.headline') }}>{{ headline }}</div>{% endif %}
             </div>
-            <div class="contact-info">
-                {% if personal.location %}<div{{ dp('personal.location') }}>{{ personal.location }}</div>{% endif %}
-                {% if personal.phone %}<div{{ dp('personal.phone') }}>{{ personal.phone }}</div>{% endif %}
+            <div class="contact-info location-cell">
+                {% if personal.location %}<div>Location: <span{{ dp('personal.location') }}>{{ personal.location }}</span></div>{% endif %}
+                {% if personal.birth_date %}<div>Date of birth: <span{{ dp('personal.birth_date') }}>{{ personal.birth_date }}</span></div>{% endif %}
+            </div>
+            <div class="contact-info contact-cell">
+                {% if personal.phone %}<div>Number: <span{{ dp('personal.phone') }}>{{ personal.phone }}</span></div>{% endif %}
                 {% if personal.email %}<div{{ dp('personal.email') }}>{{ personal.email }}</div>{% endif %}
             </div>
-            <div class="contact-info">
-                {% if personal.linkedin %}{% set li = personal.linkedin | replace('https://', '') | replace('http://', '') | replace('www.', '') %}<div><a href="https://{{ li }}">{{ li }}</a></div>{% endif %}
-                {% if personal.github %}{% set gh = personal.github | replace('https://', '') | replace('http://', '') | replace('www.', '') %}<div><a href="https://{{ gh }}">{{ gh }}</a></div>{% endif %}
+            <div class="contact-info links-cell">
+                {% if personal.linkedin %}<div><a href="{{ personal.linkedin if personal.linkedin.startswith('http') else 'https://' ~ personal.linkedin }}">LinkedIn</a></div>{% endif %}
+                {% if personal.github %}<div><a href="{{ personal.github if personal.github.startswith('http') else 'https://' ~ personal.github }}">GitHub</a></div>{% endif %}
             </div>
         </div>
     </div>
@@ -244,7 +245,7 @@
 
     {% if cv.experience %}
     <div class="section-title">Work experience</div>
-    {% for job in cv.experience %}{% set i = loop.index0 %}
+    {% for job in cv.experience %}{% set i = pidx('experience', job) %}
     <div class="job">
         <div class="job-header">
             <div class="job-title">{% if job.company %}<span{{ dp('experience[%d].company' % i) }}>{{ job.company }}</span> | {% endif %}<span{{ dp('experience[%d].title' % i) }}>{{ job.title }}</span></div>
@@ -257,7 +258,7 @@
 
     {% if cv.education %}
     <div class="section-title">Education</div>
-    {% for e in cv.education %}{% set i = loop.index0 %}
+    {% for e in cv.education %}{% set i = pidx('education', e) %}
     <div class="education-item">
         <div class="degree-header">
             <div><span{{ dp('education[%d].institution' % i) }}>{{ e.institution }}</span> | <span{{ dp('education[%d].degree' % i) }}>{{ e.degree }}</span></div>
@@ -279,7 +280,7 @@
     {% if cv.projects %}
     <div class="section-title">Projects</div>
     <ul class="projects-list">
-    {% for p in cv.projects %}{% set i = loop.index0 %}
+    {% for p in cv.projects %}{% set i = pidx('projects', p) %}
         <li><span class="project-title">{% if p.link %}<a href="{{ p.link }}"{{ dp('projects[%d].name' % i) }}>{{ p.name }}</a>{% else %}<span{{ dp('projects[%d].name' % i) }}>{{ p.name }}</span>{% endif %}</span>{% if p.description %}: <span{{ dp('projects[%d].description' % i) }}>{{ p.description }}</span>{% endif %}</li>
     {% endfor %}
     </ul>

@@ -54,10 +54,10 @@ def general_cv(profile: Profile) -> TailoredCV:
     """The untailored CV: the whole profile in its own order. No model call."""
     return TailoredCV(
         summary=profile.summary,
-        experience=list(profile.experience),
-        projects=list(profile.projects),
+        experience=[e for e in profile.experience if not e.hidden],
+        projects=[p for p in profile.projects if not p.hidden],
         skills=[s.name for s in sorted(profile.skills, key=lambda s: _first_index(profile, s.category))],
-        education=list(profile.education),
+        education=[e for e in profile.education if not e.hidden],
         change_summary=[],
     )
 

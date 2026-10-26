@@ -1,5 +1,5 @@
 <!doctype html>
-{% macro dp(p) %}{% if editable %} data-path="{{ p }}"{% endif %}{% endmacro %}
+{% macro dp(p) %}{% if editable and '[-1]' not in p %} data-path="{{ p }}"{% endif %}{% endmacro %}
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -36,7 +36,7 @@
 
   {% if cv.experience %}
   <h2>Experience</h2>
-  {% for e in cv.experience %}{% set i = loop.index0 %}
+  {% for e in cv.experience %}{% set i = pidx('experience', e) %}
   <div class="item">
     <div class="head"><span><b{{ dp('experience[%d].title' % i) }}>{{ e.title }}</b>{% if e.company %}, <span{{ dp('experience[%d].company' % i) }}>{{ e.company }}</span>{% endif %}</span><span class="when"{{ dp('experience[%d].period' % i) }}>{{ e.period }}</span></div>
     {% if e.bullets %}<ul>{% for b in e.bullets %}<li{{ dp('experience[%d].bullets[%d]' % (i, loop.index0)) }}>{{ b }}</li>{% endfor %}</ul>{% endif %}
@@ -46,7 +46,7 @@
 
   {% if cv.projects %}
   <h2>Projects</h2>
-  {% for p in cv.projects %}{% set i = loop.index0 %}
+  {% for p in cv.projects %}{% set i = pidx('projects', p) %}
   <div class="item">
     <div class="head"><span><b{{ dp('projects[%d].name' % i) }}>{{ p.name }}</b>{% if p.tech %} — {{ p.tech | join(", ") }}{% endif %}</span>{% if p.link %}<span class="when"{{ dp('projects[%d].link' % i) }}>{{ p.link }}</span>{% endif %}</div>
     {% if p.description %}<p{{ dp('projects[%d].description' % i) }}>{{ p.description }}</p>{% endif %}
@@ -56,7 +56,7 @@
 
   {% if cv.education %}
   <h2>Education</h2>
-  {% for ed in cv.education %}{% set i = loop.index0 %}
+  {% for ed in cv.education %}{% set i = pidx('education', ed) %}
   <div class="item">
     <div class="head"><span><b{{ dp('education[%d].degree' % i) }}>{{ ed.degree }}</b>, <span{{ dp('education[%d].institution' % i) }}>{{ ed.institution }}</span></span><span class="when"{{ dp('education[%d].period' % i) }}>{{ ed.period }}</span></div>
     {% if ed.gpa %}<p>GPA <span{{ dp('education[%d].gpa' % i) }}>{{ ed.gpa }}</span></p>{% endif %}

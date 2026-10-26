@@ -64,6 +64,19 @@ def render_cv_html(
                 groups.append((category, [(name, index)]))
     path = template_path or template_file(template_id)
     env = Environment(loader=FileSystemLoader(str(path.parent)), autoescape=select_autoescape(["html"]))
+
+    def pidx(section: str, item: object) -> int:
+        """Position of a CV item in the profile (for edit paths); -1 if the item is not from the profile."""
+        items: list[object] = list(getattr(profile, section))
+        for i, candidate in enumerate(items):
+            if candidate is item:
+                return i
+        for i, candidate in enumerate(items):
+            if candidate == item:
+                return i
+        return -1
+
+    env.globals["pidx"] = pidx
     template = env.get_template(path.name)
     return template.render(
         personal=profile.personal,

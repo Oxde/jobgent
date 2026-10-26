@@ -37,6 +37,7 @@ class Education(BaseModel):
     status: str = ""
     gpa: str = ""
     details: str = ""
+    hidden: bool = False
 
 
 class Experience(BaseModel):
@@ -45,6 +46,7 @@ class Experience(BaseModel):
     location: str = ""
     period: str = ""
     bullets: list[str] = Field(default_factory=list)
+    hidden: bool = False
 
 
 class Project(BaseModel):
@@ -52,6 +54,7 @@ class Project(BaseModel):
     description: str = ""
     tech: list[str] = Field(default_factory=list)
     link: str = ""
+    hidden: bool = False
 
 
 class Skill(BaseModel):

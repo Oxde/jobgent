@@ -15,7 +15,7 @@ export interface Card { job: JobSummary; days_since: number | null; applied_at: 
 export interface Column { key: string; title: string; cards: Card[]; }
 export interface Personal { name: string; headline: string; location: string; email: string; phone: string; linkedin: string; github: string; }
 export interface Profile { verified: boolean; personal: Personal; summary: string; education: Record<string, unknown>[]; experience: Record<string, unknown>[]; projects: Record<string, unknown>[]; skills: Record<string, unknown>[]; languages: Record<string, unknown>[]; preferences: { weekly_goal: number; template: string; remote_ok: boolean }; search: { keywords: string[]; locations: string[]; start_from: string; start_to: string; months_min: number; months_max: number }; }
-export interface FieldSpec { name: string; kind: "text" | "lines"; }
+export interface FieldSpec { name: string; kind: "text" | "lines" | "bool"; }
 export interface SectionSpec { key: "education" | "experience" | "projects" | "skills" | "languages"; title: string; fields: FieldSpec[]; }
 export interface TemplateInfo { id: string; name: string; description: string; color: string; }
 export interface ProfilePage { profile: Profile; checklist: ChecklistItem[]; voice: string; templates: TemplateInfo[]; sections: SectionSpec[]; master_cv: boolean; }

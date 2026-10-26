@@ -54,6 +54,24 @@ Write for both.
 6. **Projects**: 2–4, each one line: name (linked) + what it does + stack + a result if there is one.
 7. **Languages**: name + level (CEFR: B2, C1 …).
 
+## What goes on the page (the profile keeps everything)
+
+The profile is the full record; a CV is a selection. Items marked `hidden: true` stay in the profile
+but are left off the general CV. A tailored CV may bring a hidden item back when it fits the posting.
+
+- **Work experience**: the last 3–5 years, at most 3 roles for a student. Drop older roles unless the
+  posting asks for exactly that skill. Part-time and freelance roles count when they show relevant skills.
+- **Education**: the current degree plus the previous one. Courses, bootcamps and programming schools only
+  when they fill a timeline gap or match the posting; one line each.
+- **Projects**: 2–3, chosen per posting.
+- **Skills**: regroup per posting; drop groups the posting does not care about.
+- Keep the page full and on one page; cut the least relevant item first, never shrink the font below 10 pt.
+
+## The user's own choices (override the defaults above)
+
+- Header in the user's 2025 layout: name on two lines, "Location:", "Date of birth:", "Number:", email,
+  and the words "LinkedIn" / "GitHub" as links. Keep it; do not remove the date of birth.
+
 ## Bullets
 
 Formula: **action verb + what you did + how (tools) + result (number)**.

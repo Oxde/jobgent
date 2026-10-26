@@ -79,7 +79,7 @@ SECTIONS: dict[str, type[BaseModel]] = {
 
 class FieldSpec(BaseModel):
     name: str
-    kind: str  # "text" | "lines"
+    kind: str  # "text" | "lines" | "bool"
 
 
 class SectionSpec(BaseModel):
@@ -95,7 +95,7 @@ def section_specs() -> list[SectionSpec]:
         fields = []
         for name, field in model.model_fields.items():
             ann = field.annotation
-            kind = "lines" if get_origin(ann) is list and get_args(ann) == (str,) else "text"
+            kind = "bool" if ann is bool else "lines" if get_origin(ann) is list and get_args(ann) == (str,) else "text"
             fields.append(FieldSpec(name=name, kind=kind))
         specs.append(SectionSpec(key=key, title=titles[key], fields=fields))
     return specs
