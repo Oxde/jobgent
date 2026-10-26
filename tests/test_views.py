@@ -45,3 +45,27 @@ def test_classified_but_unscored_jobs_show_when_they_pass_the_model_filter(tmp_p
         s.commit()
         rows = list_jobs(s, sp)
     assert [(r.title, r.score) for r in rows] == [("ING AI Intern", None)]
+
+
+def test_feed_keeps_only_the_profile_cities_plus_remote(tmp_path):
+    Session = open_db(tmp_path / "t.db")
+    sp = SearchProfile(start_from=date(2027, 2, 1), start_to=date(2027, 4, 1), locations=["Amsterdam"])
+    with Session() as s:
+        s.add_all([
+            job("AI Intern A", location="Amsterdam, North Holland, Netherlands"),
+            job("AI Intern R", location="Rotterdam, Netherlands"),
+            job("AI Intern W", location="Remote (Netherlands)"),
+            job("AI Intern N", location=None),
+        ])
+        s.commit()
+        titles = {r.title for r in list_jobs(s, sp)}
+    assert titles == {"AI Intern A", "AI Intern W", "AI Intern N"}
+
+
+def test_country_wide_locations_do_not_filter_cities(tmp_path):
+    Session = open_db(tmp_path / "t.db")
+    sp = SearchProfile(start_from=date(2027, 2, 1), start_to=date(2027, 4, 1), locations=["Netherlands"])
+    with Session() as s:
+        s.add_all([job("AI Intern A", location="Amsterdam"), job("AI Intern R", location="Rotterdam, Netherlands")])
+        s.commit()
+        assert {r.title for r in list_jobs(s, sp)} == {"AI Intern A", "AI Intern R"}

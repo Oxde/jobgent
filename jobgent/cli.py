@@ -77,6 +77,17 @@ def fetch(classify: bool = True, score: bool = True) -> None:
 
 
 @app.command()
+def search(query: str, location: str = "Amsterdam", limit: int = 30, linkedin: bool = True) -> None:
+    """Search now: LinkedIn for QUERY in LOCATION (if APIFY_TOKEN is set) plus everything saved."""
+    from jobgent.search import search_jobs
+
+    r = search_jobs(build_services(), query, location, limit, linkedin)
+    typer.echo(f"LinkedIn: {r.fetched} fetched" + (f" ({r.source_error})" if r.source_error else ""))
+    for j in r.jobs:
+        typer.echo(f"{j.id:5d}  {j.score if j.score is not None else '--':>3}  {j.title} — {j.company} ({j.location or ''})")
+
+
+@app.command()
 def jobs(min_score: int = 0, status: str | None = None, limit: int = 30) -> None:
     """The scored feed."""
     s = build_services()

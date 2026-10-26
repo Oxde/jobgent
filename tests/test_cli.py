@@ -22,3 +22,10 @@ def test_landing_data_exports_feed_json(services, monkeypatch, tmp_path):
     data = json.loads(out.read_text())
     assert data["count"] == 2 and data["companies"] >= 1 and data["boards"] >= 20 and "updated" in data
     assert data["jobs"][0]["title"] == "Data Intern" and set(data["jobs"][0]) == {"title", "company", "city", "url"}
+
+
+def test_search_command(services, monkeypatch):
+    monkeypatch.setattr("jobgent.cli.build_services", lambda: services)
+    r = CliRunner().invoke(app, ["search", "data", "--location", "Amsterdam", "--no-linkedin"])
+    assert r.exit_code == 0, r.output
+    assert "Data Intern" in r.output and "AI Intern" not in r.output

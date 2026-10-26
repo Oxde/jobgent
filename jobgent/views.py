@@ -79,9 +79,23 @@ def get_job(session: Session, job_id: int) -> Job:
     return job
 
 
+_COUNTRY_WIDE = {"netherlands", "the netherlands", "nederland", "nl", "europe", "eu", "emea", "remote"}
+
+
+def in_cities(location: str | None, search: SearchProfile) -> bool:
+    """When the profile names cities (e.g. Amsterdam), keep jobs there, remote jobs, and jobs with no location."""
+    cities = [c.lower() for c in search.locations if c.lower() not in _COUNTRY_WIDE]
+    if not cities or not location:
+        return True
+    loc = location.lower()
+    return "remote" in loc or any(c in loc for c in cities)
+
+
 def _rule_match(job: Job, search: SearchProfile) -> bool:
-    """Feed rule for jobs no model has classified yet (no API key): title + region + language guess."""
-    return prefilter(job.title) and in_region(job.location) and guess_language(job.description) in search.languages
+    """Feed rule for jobs no model has classified yet (no API key): title + region + language guess.
+    Too little text to guess the language counts as a pass, not a fail."""
+    language = guess_language(job.description)
+    return prefilter(job.title) and in_region(job.location) and (language in search.languages or language == "other")
 
 
 def list_jobs(
@@ -106,6 +120,8 @@ def list_jobs(
     scored: list[Job] = []
     unscored: list[Job] = []
     for job in session.scalars(q):
+        if not in_cities(job.location, search):
+            continue
         passes_model = (
             job.is_internship is True
             and job.language in search.languages

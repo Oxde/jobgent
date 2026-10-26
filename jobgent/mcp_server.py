@@ -23,6 +23,7 @@ from jobgent.pack.tailor import general_cv
 from jobgent.profile.models import Profile
 from jobgent.profile.store import outline
 from jobgent.score import score_job
+from jobgent.search import SearchResult, search_jobs
 from jobgent.service import Services, build_services
 from jobgent.sources.manual import add_job_from_text, add_job_from_url
 from jobgent.tracker import WeeklyStats, set_status, weekly_stats
@@ -168,6 +169,14 @@ def build_mcp(services: Services) -> FastMCP:
         """Run every job source (company boards, LinkedIn via Apify if configured), then classify and score new jobs.
         Check `skipped` and each result's `error`: a source can fail without stopping the others."""
         return fetch_all(services, classify=classify, score=score)
+
+    @mcp.tool()
+    @in_thread
+    def jobs_search(query: str, location: str = "Amsterdam", limit: int = 30, use_linkedin: bool = True) -> SearchResult:
+        """Search internships now: runs a LinkedIn search for `query` in `location` (via Apify, if configured), saves what
+        it finds, then returns matching internships from everything saved (company boards included), best first.
+        Example: query="AI engineering intern", location="Amsterdam". Check `source_error` if LinkedIn failed."""
+        return search_jobs(services, query, location, limit, use_linkedin)
 
     @mcp.tool()
     @surface_errors
