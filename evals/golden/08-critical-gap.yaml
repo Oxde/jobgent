@@ -1,0 +1,49 @@
+name: A missing must-have caps the verdict at consider
+posting:
+  title: AI Intern
+  company: Northwind
+  location: Amsterdam
+  description: AI intern. You must know Rust. Python is a plus.
+  classification:
+    language: en
+    dutch_required: false
+    dutch_plus: false
+  live_status: null
+recorded:
+  extracted:
+    summary: A missing must-have caps the verdict at consider
+    deadline: null
+    requirements:
+    - text: Rust
+      kind: skill
+      importance: critical
+      basis: stated
+    - text: Python
+      kind: skill
+      importance: nice
+      basis: stated
+  mapped:
+    items:
+    - index: 0
+      evidence_kind: none
+      evidence_ref: null
+      evidence_text: ''
+    - index: 1
+      evidence_kind: project
+      evidence_ref: 1
+      evidence_text: Python
+  score:
+    skills: 41
+    role: 16
+    lang_loc: 15
+    timing: 10
+    reasons:
+    - r
+    gaps: []
+    keywords:
+    - Python
+expect:
+  gates:
+    language: pass
+  verdict: consider
+  ai_calls: 3

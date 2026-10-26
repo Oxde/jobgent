@@ -1,0 +1,19 @@
+name: Outside the student's cities
+posting:
+  title: AI Intern
+  company: Northwind
+  location: Rotterdam, Netherlands
+  description: 'Northwind is looking for an AI intern in Rotterdam. You will build
+    internal tools with Python and LLMs. Requirements: enrolled student, Python, SQL.
+    Start February 2027, 6 months, paid.'
+  classification:
+    language: en
+    dutch_required: false
+    dutch_plus: false
+  live_status: null
+recorded: null
+expect:
+  gates:
+    location: fail
+  verdict: skip
+  ai_calls: 0

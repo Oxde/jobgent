@@ -1,0 +1,19 @@
+name: Dutch required stops everything before any AI call
+posting:
+  title: AI Intern
+  company: Northwind
+  location: Amsterdam
+  description: 'Northwind is looking for an AI intern in Amsterdam. You will build
+    internal tools with Python and LLMs. Requirements: enrolled student, Python, SQL.
+    Start February 2027, 6 months, paid. Vloeiend Nederlands is vereist.'
+  classification:
+    language: nl
+    dutch_required: true
+    dutch_plus: false
+  live_status: null
+recorded: null
+expect:
+  gates:
+    language: fail
+  verdict: skip
+  ai_calls: 0

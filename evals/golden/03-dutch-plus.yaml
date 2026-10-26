@@ -1,0 +1,59 @@
+name: Dutch as a plus is a warning, not a stop
+posting:
+  title: AI Intern
+  company: Northwind
+  location: Amsterdam
+  description: 'Northwind is looking for an AI intern in Amsterdam. You will build
+    internal tools with Python and LLMs. Requirements: enrolled student, Python, SQL.
+    Start February 2027, 6 months, paid. Dutch is a plus.'
+  classification:
+    language: en
+    dutch_required: false
+    dutch_plus: true
+  live_status: null
+recorded:
+  extracted:
+    summary: Dutch as a plus is a warning, not a stop
+    deadline: null
+    requirements:
+    - text: Python
+      kind: skill
+      importance: critical
+      basis: stated
+    - text: SQL
+      kind: skill
+      importance: high
+      basis: stated
+    - text: Experience with LLMs
+      kind: experience
+      importance: nice
+      basis: stated
+  mapped:
+    items:
+    - index: 0
+      evidence_kind: project
+      evidence_ref: 1
+      evidence_text: StudyBuddy in Python
+    - index: 1
+      evidence_kind: skill
+      evidence_ref: 7
+      evidence_text: SQL listed
+    - index: 2
+      evidence_kind: project
+      evidence_ref: 1
+      evidence_text: LangChain chatbot
+  score:
+    skills: 40
+    role: 16
+    lang_loc: 15
+    timing: 9
+    reasons:
+    - r
+    gaps: []
+    keywords:
+    - Python
+expect:
+  gates:
+    language: flag
+  verdict: apply
+  ai_calls: 3

@@ -1,0 +1,57 @@
+name: Low score means skip
+posting:
+  title: AI Intern
+  company: Northwind
+  location: Amsterdam
+  description: 'Senior-level data platform internship: Spark, Scala, Kubernetes required.'
+  classification:
+    language: en
+    dutch_required: false
+    dutch_plus: false
+  live_status: null
+recorded:
+  extracted:
+    summary: Low score means skip
+    deadline: null
+    requirements:
+    - text: Spark
+      kind: skill
+      importance: critical
+      basis: stated
+    - text: Scala
+      kind: skill
+      importance: critical
+      basis: stated
+    - text: Kubernetes
+      kind: skill
+      importance: high
+      basis: stated
+  mapped:
+    items:
+    - index: 0
+      evidence_kind: none
+      evidence_ref: null
+      evidence_text: ''
+    - index: 1
+      evidence_kind: none
+      evidence_ref: null
+      evidence_text: ''
+    - index: 2
+      evidence_kind: none
+      evidence_ref: null
+      evidence_text: ''
+  score:
+    skills: 17
+    role: 7
+    lang_loc: 5
+    timing: 6
+    reasons:
+    - r
+    gaps: []
+    keywords:
+    - Python
+expect:
+  gates:
+    language: pass
+  verdict: skip
+  ai_calls: 3

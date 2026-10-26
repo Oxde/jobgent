@@ -203,6 +203,47 @@ def landing_data(out: Path = typer.Argument(Path("landing/data.json"))) -> None:
     typer.echo(f"{len(rows)} jobs → {out}")
 
 
+@app.command("eval")
+def eval_cmd() -> None:
+    """Run the golden cases against the real model and report agreement with the expected gates and verdicts."""
+    from jobgent.db import open_db
+    from jobgent.demo import PROFILE
+    from jobgent.errors import MissingSecretError
+    from jobgent.evals import CASES_DIR, case_job, load_cases
+    from jobgent.evaluate import evaluate_job
+    import tempfile
+
+    services = build_services()
+    try:
+        llm = services.llm_factory()
+    except MissingSecretError as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(code=1) from e
+    cases = load_cases(CASES_DIR)
+    agree = 0
+    with tempfile.TemporaryDirectory() as tmp:
+        session = open_db(Path(tmp) / "eval.db")()
+        for case in cases:
+            job = case_job(case)
+            session.add(job)
+            session.commit()
+            ev = evaluate_job(session, llm, services.settings.fast_model, PROFILE, job)
+            gates = {g["name"]: g["status"] for g in ev.gates}
+            ok = ev.verdict == case.expect.verdict and all(gates.get(k) == v for k, v in case.expect.gates.items())
+            agree += ok
+            typer.echo(f"{'OK  ' if ok else 'DIFF'} {case.id:18s} expected {case.expect.verdict:8s} got {ev.verdict:8s} {ev.verdict_reason[:70]}")
+    typer.echo(f"\n{agree}/{len(cases)} agree with the expected verdicts and gates.")
+
+
+@app.command()
+def demo(home: Path = typer.Option(Path.home() / ".jobgent-demo", help="Where to create the demo (never your real ~/.jobgent).")) -> None:
+    """Create a complete demo with a made-up student (no API key or personal data needed)."""
+    from jobgent.demo import build_demo
+
+    build_demo(home.expanduser())
+    typer.echo(f"Demo ready in {home}. Open it with:\n  JOBGENT_HOME={home} uv run jobgent web")
+
+
 @app.command()
 def mcp(http: bool = typer.Option(False, help="Serve over streamable HTTP (for ChatGPT and other remote clients) instead of stdio."),
         port: int = 8790) -> None:

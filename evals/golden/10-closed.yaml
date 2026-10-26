@@ -1,0 +1,19 @@
+name: A closed posting is skipped without AI calls
+posting:
+  title: AI Intern
+  company: Northwind
+  location: Amsterdam
+  description: 'Northwind is looking for an AI intern in Amsterdam. You will build
+    internal tools with Python and LLMs. Requirements: enrolled student, Python, SQL.
+    Start February 2027, 6 months, paid.'
+  classification:
+    language: en
+    dutch_required: false
+    dutch_plus: false
+  live_status: closed
+recorded: null
+expect:
+  gates:
+    open: fail
+  verdict: skip
+  ai_calls: 0

@@ -29,3 +29,15 @@ def test_search_command(services, monkeypatch):
     r = CliRunner().invoke(app, ["search", "data", "--location", "Amsterdam", "--no-linkedin"])
     assert r.exit_code == 0, r.output
     assert "Data Intern" in r.output and "AI Intern" not in r.output
+
+
+def test_eval_command_without_key_explains(services, monkeypatch):
+    monkeypatch.setattr("jobgent.cli.build_services", lambda: services)
+    from jobgent.errors import MissingSecretError
+
+    def boom():
+        raise MissingSecretError("ANTHROPIC_API_KEY")
+
+    services.llm_factory = boom
+    r = CliRunner().invoke(app, ["eval"])
+    assert r.exit_code == 1 and "ANTHROPIC_API_KEY" in r.output
