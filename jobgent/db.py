@@ -100,6 +100,49 @@ class Evaluation(Base):
     job: Mapped[Job] = relationship(back_populates="evaluation")
 
 
+class ApplicationEvent(Base):
+    """Status changes (with what to restore on undo), notes and interview dates, in order."""
+
+    __tablename__ = "application_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(16))  # status | note | interview | followup
+    from_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    to_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    prev_furthest: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    prev_applied_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    text: Mapped[str] = mapped_column(Text, default="")
+    at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
+class Document(Base):
+    """A pack document (cv / letter / email / followup) as editable units; see jobgent.documents."""
+
+    __tablename__ = "documents"
+    __table_args__ = (UniqueConstraint("job_id", "kind", name="uq_document_kind"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"))
+    kind: Mapped[str] = mapped_column(String(16))
+    content: Mapped[dict[str, object]] = mapped_column(JSON)
+    trimmed: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class DocumentVersion(Base):
+    """Snapshot taken before every AI change (and before a restore), so it can be undone."""
+
+    __tablename__ = "document_versions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    document_id: Mapped[int] = mapped_column(ForeignKey("documents.id"), index=True)
+    content: Mapped[dict[str, object]] = mapped_column(JSON)
+    cause: Mapped[str] = mapped_column(String(32))
+    detail: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
 class Application(Base):
     __tablename__ = "applications"
 

@@ -15,7 +15,9 @@ from sqlalchemy.orm import Session
 
 from jobgent.config import Settings
 from jobgent.db import Job, Status
+from jobgent.documents import save_document
 from jobgent.errors import InventedClaimError, JobgentError, ProfileNotVerifiedError
+from jobgent.lifecycle import record_status
 from jobgent.llm import LLM
 from jobgent.pack.ats_pdf import AtsPdfCheck, ats_check_text, keyword_buckets, pdf_text
 from jobgent.pack.factguard import banned_phrases, fact_check, tidy_letter
@@ -164,7 +166,15 @@ def create_pack(
     (out_dir / "meta.json").write_text(json.dumps(result.model_dump(mode="json"), indent=2))
     (out_dir / "cv.json").write_text(cv.model_dump_json(indent=2))
 
-    app.status = Status.pack_ready
+    save_document(session, job.id, "cv", cv.model_dump(mode="json"), cause="written")
+    save_document(session, job.id, "letter", {"paragraphs": [p.strip() for p in letter.body.split("\n\n") if p.strip()]}, cause="written")
+    save_document(session, job.id, "email", {
+        "subject": f"Application: {job.title} – {profile.personal.name}",
+        "body": f"Dear hiring team,\n\nPlease find attached my CV and cover letter for the {job.title} position at {job.company}.\n\nKind regards,\n{profile.personal.name}",
+    }, cause="written")
+    if app.status in (Status.new, Status.liked):
+        record_status(session, app, Status.pack_ready)
+        app.status = Status.pack_ready
     app.pack_dir = str(out_dir)
     session.commit()
     return result

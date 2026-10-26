@@ -3,22 +3,33 @@
 from __future__ import annotations
 
 from datetime import datetime
+from collections.abc import Callable
 from pathlib import Path
 from typing import get_args, get_origin
 
 from fastapi import APIRouter, FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+import yaml
 from pydantic import BaseModel, ValidationError
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from jobgent.assistant import Turn, chat
 from jobgent.ats import AtsReport, ats_report
 from jobgent.dashboard import Column, HomeData, applications_board, home_data
-from jobgent.db import Status
+from jobgent.db import ApplicationEvent, Document, Status
+from jobgent.lifecycle import TimelineItem, add_note, set_interview, timeline, undo_status
+from jobgent.pack.followup import FollowUp, write_followup
+from jobgent.documents import save_document
+from jobgent.documents import leave_out, load_document, put_back, restore_version, set_unit, undo_last, units_of, versions, Unit
 from jobgent.errors import JobgentError, MissingSecretError
 from jobgent.evaluate import evaluate_job
 from jobgent.pack.create import PackResult, create_pack, load_pack, pack_dir_for
+from jobgent.pack.factguard import fact_check
 from jobgent.pack.pdf import html_to_pdf
+from jobgent.pack.render_pack import rerender
+from jobgent.pack.rewrite import rewrite_unit
 from jobgent.pack.render import EDITABLE_TEMPLATES, TemplateInfo, list_templates, render_cv_html, template_file
 from jobgent.pack.tailor import general_cv
 from jobgent.profile.models import Education, Experience, Language, Profile, Project, Skill
@@ -127,6 +138,37 @@ class JobPage(BaseModel):
     pack: PackResult | None
     letter: str | None
     evaluation: EvaluationView | None = None
+
+
+class TextBody(BaseModel):
+    text: str
+
+
+class InstructionBody(BaseModel):
+    instruction: str
+
+
+class VersionView(BaseModel):
+    id: int
+    cause: str
+    detail: str
+    created_at: datetime
+
+
+class DocumentView(BaseModel):
+    units: list[Unit]
+    trimmed: list[dict[str, object]]
+    versions: list[VersionView]
+
+
+class AiEditResult(BaseModel):
+    declined: bool
+    reason: str
+    check_this: list[str]
+
+
+class InterviewBody(BaseModel):
+    at: datetime
 
 
 class StatusBody(BaseModel):
@@ -272,6 +314,90 @@ def build_api(services: Services) -> APIRouter:
         profile = services.store.load()
         return HTMLResponse(render_cv_html(profile, general_cv(profile), services.store.master_cv_path(), profile.preferences.template))
 
+    def _doc_view(s: Session, job_id: int, kind: str) -> DocumentView | None:
+        doc = s.scalar(select(Document).where(Document.job_id == job_id, Document.kind == kind))
+        if doc is None:
+            return None
+        return DocumentView(
+            units=units_of(kind, doc.content), trimmed=doc.trimmed,
+            versions=[VersionView.model_validate(v, from_attributes=True) for v in versions(s, job_id, kind)],
+        )
+
+    def _after_change(s: Session, job_id: int) -> None:
+        rerender(services.settings, s, services.store, get_job(s, job_id))
+
+    @api.get("/jobs/{job_id}/documents")
+    def documents(job_id: int) -> dict[str, DocumentView | None]:
+        with services.sessionmaker() as s:
+            get_job(s, job_id)
+            return {kind: _doc_view(s, job_id, kind) for kind in ("cv", "letter", "email", "followup")}
+
+    @api.patch("/jobs/{job_id}/documents/{kind}")
+    def edit_unit(job_id: int, kind: str, unit: str, body: TextBody) -> DocumentView:
+        with services.sessionmaker() as s:
+            try:
+                set_unit(s, job_id, kind, unit, body.text, cause=None)
+                _after_change(s, job_id)
+            except JobgentError as e:
+                raise _bad(e) from e
+            view = _doc_view(s, job_id, kind)
+            assert view is not None
+            return view
+
+    @api.post("/jobs/{job_id}/documents/{kind}/ai")
+    def ai_edit_unit(job_id: int, kind: str, unit: str, body: InstructionBody) -> AiEditResult:
+        profile = services.store.load()
+        try:
+            llm = services.llm_factory()
+        except MissingSecretError as e:
+            raise _bad(e) from e
+        with services.sessionmaker() as s:
+            try:
+                job = get_job(s, job_id)
+                doc = load_document(s, job_id, kind)
+                current = next((u for u in units_of(kind, doc.content) if u.id == unit), None)
+                if current is None:
+                    raise JobgentError(f"No unit {unit!r} in this {kind}.")
+                out = rewrite_unit(llm, services.settings.smart_model, profile, job, current.label, current.text, body.instruction)
+                if out.declined:
+                    return AiEditResult(declined=True, reason=out.reason, check_this=[])
+                corpus = yaml.safe_dump(profile.model_dump(mode="json"), allow_unicode=True) + "\n".join(profile.facts) + job.description
+                report = fact_check(out.text, corpus)
+                if report.invented_numbers:
+                    raise JobgentError("Not applied: the rewrite contains numbers that are not in your profile or the posting: " + ", ".join(report.invented_numbers))
+                set_unit(s, job_id, kind, unit, out.text, cause="refined", detail=body.instruction)
+                _after_change(s, job_id)
+            except JobgentError as e:
+                raise _bad(e) from e
+            return AiEditResult(declined=False, reason="", check_this=report.unverified_names)
+
+    @api.post("/jobs/{job_id}/documents/{kind}/undo")
+    def undo_doc(job_id: int, kind: str) -> DocumentView:
+        return _doc_action(job_id, kind, lambda s: undo_last(s, job_id, kind))
+
+    @api.post("/jobs/{job_id}/documents/{kind}/leave-out")
+    def leave_out_unit(job_id: int, kind: str, unit: str) -> DocumentView:
+        return _doc_action(job_id, kind, lambda s: leave_out(s, job_id, kind, unit))
+
+    @api.post("/jobs/{job_id}/documents/{kind}/put-back/{index}")
+    def put_back_unit(job_id: int, kind: str, index: int) -> DocumentView:
+        return _doc_action(job_id, kind, lambda s: put_back(s, job_id, kind, index))
+
+    @api.post("/jobs/{job_id}/documents/{kind}/restore/{version_id}")
+    def restore_doc(job_id: int, kind: str, version_id: int) -> DocumentView:
+        return _doc_action(job_id, kind, lambda s: restore_version(s, job_id, kind, version_id))
+
+    def _doc_action(job_id: int, kind: str, action: Callable[[Session], object]) -> DocumentView:
+        with services.sessionmaker() as s:
+            try:
+                action(s)
+                _after_change(s, job_id)
+            except JobgentError as e:
+                raise _bad(e) from e
+            view = _doc_view(s, job_id, kind)
+            assert view is not None
+            return view
+
     @api.post("/jobs/{job_id}/pack")
     def make_pack(job_id: int) -> PackResult:
         with services.sessionmaker() as s:
@@ -292,6 +418,62 @@ def build_api(services: Services) -> APIRouter:
                 return detail(get_job(s, job_id))
             except JobgentError as e:
                 raise HTTPException(status_code=404, detail=str(e)) from e
+
+    @api.post("/jobs/{job_id}/status/undo")
+    def status_undo(job_id: int) -> JobSummary:
+        with services.sessionmaker() as s:
+            try:
+                undo_status(s, job_id)
+                return detail(get_job(s, job_id))
+            except JobgentError as e:
+                raise _bad(e) from e
+
+    @api.post("/jobs/{job_id}/interview")
+    def interview(job_id: int, body: InterviewBody) -> JobSummary:
+        with services.sessionmaker() as s:
+            try:
+                set_interview(s, job_id, body.at)
+                return detail(get_job(s, job_id))
+            except JobgentError as e:
+                raise _bad(e) from e
+
+    @api.post("/jobs/{job_id}/notes")
+    def note(job_id: int, body: TextBody) -> list[TimelineItem]:
+        with services.sessionmaker() as s:
+            get_job(s, job_id)
+            add_note(s, job_id, body.text)
+            return timeline(s, job_id)
+
+    @api.get("/jobs/{job_id}/timeline")
+    def job_timeline(job_id: int) -> list[TimelineItem]:
+        with services.sessionmaker() as s:
+            return timeline(s, job_id)
+
+    @api.post("/jobs/{job_id}/followup")
+    def followup(job_id: int) -> FollowUp:
+        profile = services.store.load()
+        try:
+            llm = services.llm_factory()
+        except MissingSecretError as e:
+            raise _bad(e) from e
+        with services.sessionmaker() as s:
+            job = get_job(s, job_id)
+            app = job.application
+            if app is None or app.applied_at is None:
+                raise HTTPException(status_code=400, detail="Mark the application as sent first.")
+            done = len([e for e in timeline(s, job_id) if e.kind == "followup"])
+            draft = write_followup(llm, services.settings.smart_model, profile, job, (datetime.now() - app.applied_at).days, done + 1)
+            paragraphs = [p.strip() for p in draft.body.split("\n\n") if p.strip()]
+            save_document(s, job_id, "followup", {"subject": draft.subject, "paragraphs": paragraphs}, cause="written")
+            return draft
+
+    @api.post("/jobs/{job_id}/followup/sent")
+    def followup_sent(job_id: int) -> list[TimelineItem]:
+        with services.sessionmaker() as s:
+            get_job(s, job_id)
+            s.add(ApplicationEvent(job_id=job_id, kind="followup", text="Follow-up sent"))
+            s.commit()
+            return timeline(s, job_id)
 
     @api.get("/applications")
     def applications() -> list[Column]:
@@ -446,6 +628,9 @@ def create_app(services: Services) -> FastAPI:
                 pack = load_pack(services.settings, get_job(s, job_id))
             except JobgentError as e:
                 raise HTTPException(status_code=404, detail=str(e)) from e
+        html_path = pack.cv_html
+        if html_path.is_file() and (not pack.cv_pdf.is_file() or html_path.stat().st_mtime > pack.cv_pdf.stat().st_mtime):
+            html_to_pdf(html_path.read_text(), pack.cv_pdf, fit=True)  # edited since the last PDF
         return FileResponse(pack.cv_pdf, media_type="application/pdf", filename=f"cv-{job_id}.pdf")
 
     dist = DIST

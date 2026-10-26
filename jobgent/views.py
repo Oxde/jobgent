@@ -24,6 +24,10 @@ class JobSummary(BaseModel):
     url: str
     posted_at: datetime | None
     source: str
+    verdict: str | None = None
+    deadline: str | None = None
+    age_days: int | None = None
+    also_in: int = 0
 
 
 class JobDetail(JobSummary):
@@ -51,6 +55,9 @@ def summary(job: Job) -> JobSummary:
         url=job.url,
         posted_at=job.posted_at,
         source=job.source,
+        verdict=job.evaluation.verdict if job.evaluation else None,
+        deadline=job.deadline,
+        age_days=(datetime.now() - job.posted_at).days if job.posted_at else None,
     )
 
 
@@ -135,7 +142,18 @@ def list_jobs(
             unscored.append(job)
     scored.sort(key=lambda j: (-(j.match.total if j.match else 0), -j.id))
     unscored.sort(key=lambda j: (j.posted_at or j.fetched_at), reverse=True)
-    return [summary(j) for j in (scored + unscored)[:limit]]
+    # The same internship posted in several cities shows once, with a count.
+    rows: list[JobSummary] = []
+    seen: dict[tuple[str, str], JobSummary] = {}
+    for j in scored + unscored:
+        key = (j.company.strip().lower(), " ".join(j.title.lower().split()))
+        if key in seen:
+            seen[key].also_in += 1
+            continue
+        row = summary(j)
+        seen[key] = row
+        rows.append(row)
+    return rows[:limit]
 
 
 def list_applications(session: Session, status: str | None = None) -> list[JobSummary]:

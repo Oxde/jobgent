@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from jobgent.db import Application, Job, Status
 from jobgent.errors import JobgentError
+from jobgent.lifecycle import record_status
 
 
 class WeeklyStats(BaseModel):
@@ -31,6 +32,8 @@ def get_or_create_application(session: Session, job_id: int) -> Application:
 
 def set_status(session: Session, job_id: int, status: Status, notes: str | None) -> Application:
     app = get_or_create_application(session, job_id)
+    if app.status != status:
+        record_status(session, app, status)
     app.status = status
     if status == Status.applied and app.applied_at is None:
         app.applied_at = datetime.now()
