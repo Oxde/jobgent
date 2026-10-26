@@ -1,19 +1,53 @@
-"""HTML for the CV: the default A4 template or the user's own master_cv.html (same Jinja variables)."""
+"""HTML for the CV: a built-in template by id, or the user's own master_cv.html (same Jinja variables)."""
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from pydantic import BaseModel
 
 from jobgent.pack.tailor import TailoredCV
 from jobgent.profile.models import Profile
 
+TEMPLATES_DIR = Path(__file__).parent / "templates"
 DEFAULT_TEMPLATE = Path(__file__).parent / "default_cv.html"
+DEFAULT_TEMPLATE_ID = "default"
 
 
-def render_cv_html(profile: Profile, cv: TailoredCV, template_path: Path | None) -> str:
-    path = template_path or DEFAULT_TEMPLATE
+class TemplateInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+    color: str
+
+
+def list_templates() -> list[TemplateInfo]:
+    built_in = [TemplateInfo(id=DEFAULT_TEMPLATE_ID, name="Jobgent", description="Plain, one page, ATS-safe.", color="#15192b")]
+    extra = json.loads((TEMPLATES_DIR / "templates.json").read_text())
+    return built_in + [TemplateInfo.model_validate(t) for t in extra]
+
+
+def template_file(template_id: str) -> Path:
+    if template_id == DEFAULT_TEMPLATE_ID:
+        return DEFAULT_TEMPLATE
+    path = TEMPLATES_DIR / f"{template_id}.html"
+    if not path.is_file():
+        raise KeyError(f"No CV template {template_id!r}. Known: {', '.join(t.id for t in list_templates())}")
+    return path
+
+
+def render_cv_html(
+    profile: Profile, cv: TailoredCV, template_path: Path | None, template_id: str = DEFAULT_TEMPLATE_ID
+) -> str:
+    path = template_path or template_file(template_id)
     env = Environment(loader=FileSystemLoader(str(path.parent)), autoescape=select_autoescape(["html"]))
     template = env.get_template(path.name)
-    return template.render(personal=profile.personal, cv=cv, languages=profile.languages)
+    return template.render(
+        personal=profile.personal,
+        headline=profile.personal.headline,
+        cv=cv,
+        languages=profile.languages,
+        certifications=[],
+    )

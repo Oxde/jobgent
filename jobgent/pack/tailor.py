@@ -47,3 +47,15 @@ def tailor_cv(llm: LLM, model: str, profile: Profile, job: Job, extra_instructio
     if extra_instruction:
         user += f"\n\n## Extra instruction\n{extra_instruction}"
     return llm.complete_json(model=model, system=_PROMPT, user=user, schema=TailoredCV, max_tokens=4096)
+
+
+def general_cv(profile: Profile) -> TailoredCV:
+    """The untailored CV: the whole profile in its own order. No model call."""
+    return TailoredCV(
+        summary=profile.summary,
+        experience=list(profile.experience),
+        projects=list(profile.projects),
+        skills=[s.name for s in profile.skills],
+        education=list(profile.education),
+        change_summary=[],
+    )

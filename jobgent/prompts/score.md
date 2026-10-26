@@ -8,3 +8,5 @@ Give four sub-scores:
 
 reasons: 3–5 short, concrete reasons for the score, each naming a specific profile fact and a specific posting requirement.
 gaps: what the posting asks for that the profile does not show (be specific, e.g. "SQL", "Dutch", "2+ years"). Empty list if none.
+
+keywords: 8–15 concrete skills, tools, methods or qualifications the posting asks for, as short phrases exactly as an applicant-tracking system would look for them (e.g. "Python", "SQL", "machine learning", "stakeholder management"). No soft filler like "team player".

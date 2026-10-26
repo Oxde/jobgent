@@ -68,6 +68,7 @@ class Match(Base):
     timing: Mapped[int]
     reasons: Mapped[list[str]] = mapped_column(JSON)
     gaps: Mapped[list[str]] = mapped_column(JSON)
+    keywords: Mapped[list[str]] = mapped_column(JSON, default=list)
     model: Mapped[str] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 

@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width">
+<style>
+@page { size: A4; margin: 12mm; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 14px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1a1a1a; line-height: 1.5; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+.page { max-width: 850px; margin: 0 auto; padding: 40px 50px; background: #fff; }
+@media print { .page { padding: 30px 40px; } }
+
+body { font-family: 'Segoe UI', system-ui, sans-serif; }
+.page { display: grid; grid-template-columns: 1fr 240px; padding: 0; max-width: 870px; }
+.main { padding: 35px 30px; }
+.sidebar { background: #fafafa; padding: 35px 22px; border-left: 1px solid #e5e7eb; }
+.header h1 { font-size: 1.8rem; font-weight: 700; color: #dc2626; }
+.header .title { font-size: 0.95rem; color: #4b5563; margin-bottom: 15px; }
+.section { margin-bottom: 18px; }
+.section-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #dc2626; border-bottom: 2px solid #dc2626; padding-bottom: 3px; margin-bottom: 10px; }
+.sidebar .section-title { color: #374151; border-color: #d1d5db; }
+.summary { font-size: 0.9rem; color: #374151; line-height: 1.6; }
+.exp-item { margin-bottom: 14px; }
+.exp-item h3 { font-size: 0.95rem; font-weight: 600; }
+.exp-item .meta { font-size: 0.8rem; color: #dc2626; }
+.exp-item .dates { font-size: 0.8rem; color: #9ca3af; }
+.exp-bullets li { font-size: 0.85rem; color: #374151; margin-bottom: 2px; padding-left: 12px; position: relative; }
+.exp-bullets li::before { content: '▪'; position: absolute; left: 0; color: #dc2626; }
+.sidebar-item { font-size: 0.8rem; color: #374151; margin-bottom: 3px; }
+.sidebar .skill-tag { display: inline-block; font-size: 0.75rem; background: #fff; border: 1px solid #e5e7eb; padding: 2px 8px; border-radius: 3px; margin: 2px; }
+.project-item { margin-bottom: 10px; }
+.project-item h3 { font-size: 0.9rem; font-weight: 600; }
+.project-item p { font-size: 0.8rem; color: #4b5563; }
+@media (max-width: 650px) { .page { grid-template-columns: 1fr; } .sidebar { border-left: none; border-top: 1px solid #e5e7eb; } }
+@media print { .page { grid-template-columns: 1fr 220px; } }
+</style></head><body><div class="page">
+<div class="main">
+  <div class="header">
+    <h1>{{ personal.name }}</h1>
+    {% if headline %}<div class="title">{{ headline }}</div>{% endif %}
+  </div>
+
+  {% if cv.summary %}
+  <div class="section">
+    <div class="section-title">Profile</div>
+    <div class="summary">{{ cv.summary }}</div>
+  </div>
+  {% endif %}
+
+  {% if cv.experience %}
+  <div class="section">
+    <div class="section-title">Experience</div>
+    {% for job in cv.experience %}
+    <div class="exp-item">
+      <h3>{{ job.title }}</h3>
+      <div class="meta">{{ job.company }}</div>
+      <div class="dates">{{ job.period }}</div>
+      {% if job.bullets %}<ul class="exp-bullets">{% for b in job.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if cv.projects %}
+  <div class="section">
+    <div class="section-title">Projects</div>
+    {% for p in cv.projects %}
+    <div class="project-item">
+      <h3>{{ p.name }}</h3>
+      <p>{{ p.description }}</p>
+      {% if p.tech %}<div style="font-size:0.7rem;color:#dc2626;margin-top:2px">{{ p.tech if p.tech is string else p.tech | join(' · ') }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="sidebar">
+  <div class="section">
+    <div class="section-title">Contact</div>
+    {% if personal.email %}<div class="sidebar-item">{{ personal.email }}</div>{% endif %}
+    {% if personal.phone %}<div class="sidebar-item">{{ personal.phone }}</div>{% endif %}
+    {% if personal.location %}<div class="sidebar-item">{{ personal.location }}</div>{% endif %}
+    {% if personal.linkedin %}<div class="sidebar-item">{{ personal.linkedin }}</div>{% endif %}
+    {% if personal.github %}<div class="sidebar-item">{{ personal.github }}</div>{% endif %}
+    {% if false %}<div class="sidebar-item"></div>{% endif %}
+  </div>
+
+  {% if cv.skills %}
+  <div class="section">
+    <div class="section-title">Skills</div>
+    <div>{% for s in cv.skills %}<span class="skill-tag">{{ s }}</span>{% endfor %}</div>
+  </div>
+  {% endif %}
+
+  {% if cv.education %}
+  <div class="section">
+    <div class="section-title">Education</div>
+    {% for e in cv.education %}
+    <div style="margin-bottom:8px">
+      <div style="font-size:0.8rem;font-weight:600">{{ e.degree }}</div>
+      <div style="font-size:0.75rem;color:#6b7280">{{ e.institution }}{% if e.period %}<br>{{ e.period }}{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if certifications %}
+  <div class="section">
+    <div class="section-title">Certifications</div>
+    {% for c in certifications %}<div class="sidebar-item">{{ c.name }}{% if c.year %} ({{ c.year }}){% endif %}</div>{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if languages %}
+  <div class="section">
+    <div class="section-title">Languages</div>
+    {% for l in languages %}<div class="sidebar-item">{{ l.name }} – {{ l.level }}</div>{% endfor %}
+  </div>
+  {% endif %}
+</div>
+</div></body></html>

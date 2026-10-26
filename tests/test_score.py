@@ -71,3 +71,17 @@ def test_score_job_links_match_to_job_object(tmp_path):
         s.commit()
         score_job(s, FakeLLM([out()]), "m", profile(), j)
         assert detail(j).score == 85 and detail(j).reasons == ["python"]
+
+
+def test_score_output_keywords_are_stored(tmp_path):
+    from jobgent.score import score_job
+
+    Session = open_db(tmp_path / "t.db")
+    with Session() as s:
+        j = job("a")
+        s.add(j)
+        s.commit()
+        o = out()
+        o.keywords = ["Python", "SQL"]
+        m = score_job(s, FakeLLM([o]), "m", profile(), j)
+        assert m.keywords == ["Python", "SQL"]

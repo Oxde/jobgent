@@ -76,12 +76,12 @@ def create_pack(
 
     cv = tailor_cv(llm, settings.smart_model, profile, job)
     verify_against_profile(llm, settings.fast_model, profile, cv.as_text())
-    html = render_cv_html(profile, cv, store.master_cv_path())
+    html = render_cv_html(profile, cv, store.master_cv_path(), profile.preferences.template)
     pages = pdf(html, cv_pdf_path)
     if pages > 1:
         cv = tailor_cv(llm, settings.smart_model, profile, job, extra_instruction="The previous version overflowed one A4 page. Shorten by about 20%: fewer bullets, tighter wording. Keep the most relevant content.")
         verify_against_profile(llm, settings.fast_model, profile, cv.as_text())
-        html = render_cv_html(profile, cv, store.master_cv_path())
+        html = render_cv_html(profile, cv, store.master_cv_path(), profile.preferences.template)
         pages = pdf(html, cv_pdf_path)
         if pages > 1:
             raise JobgentError(f"CV is {pages} pages after one retry for job {job.id} ({job.title}). Trim the profile or the master template.")

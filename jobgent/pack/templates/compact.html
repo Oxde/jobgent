@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width">
+<style>
+@page { size: A4; margin: 12mm; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 14px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1a1a1a; line-height: 1.5; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+.page { max-width: 850px; margin: 0 auto; padding: 40px 50px; background: #fff; }
+@media print { .page { padding: 30px 40px; } }
+
+html { font-size: 12px; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; }
+.page { padding: 25px 35px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #059669; padding-bottom: 8px; margin-bottom: 12px; }
+.header h1 { font-size: 1.6rem; font-weight: 700; color: #059669; }
+.header .title { font-size: 0.9rem; color: #4b5563; }
+.contact-col { text-align: right; font-size: 0.8rem; color: #6b7280; line-height: 1.4; }
+.section { margin-bottom: 10px; }
+.section-title { font-size: 0.8rem; font-weight: 700; color: #059669; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; background: #f0fdf4; padding: 2px 6px; }
+.summary { font-size: 0.85rem; color: #374151; line-height: 1.4; margin-bottom: 10px; }
+.exp-item { margin-bottom: 8px; }
+.exp-line { display: flex; justify-content: space-between; font-size: 0.85rem; }
+.exp-line h3 { font-weight: 600; }
+.exp-line .dates { color: #9ca3af; font-size: 0.8rem; }
+.exp-bullets { margin-top: 2px; }
+.exp-bullets li { font-size: 0.8rem; color: #4b5563; margin-bottom: 1px; padding-left: 10px; position: relative; }
+.exp-bullets li::before { content: '•'; position: absolute; left: 0; color: #059669; }
+.skills-inline { font-size: 0.8rem; color: #374151; line-height: 1.6; }
+.bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 500px) { .bottom-grid { grid-template-columns: 1fr; } .header { flex-direction: column; } .contact-col { text-align: left; margin-top: 6px; } }
+</style></head><body><div class="page">
+<div class="header">
+  <div>
+    <h1>{{ personal.name }}</h1>
+    {% if headline %}<div class="title">{{ headline }}</div>{% endif %}
+  </div>
+  <div class="contact-col">
+    {% if personal.email %}<div>{{ personal.email }}</div>{% endif %}
+    {% if personal.phone %}<div>{{ personal.phone }}</div>{% endif %}
+    {% if personal.location %}<div>{{ personal.location }}</div>{% endif %}
+    {% if personal.linkedin %}<div>{{ personal.linkedin }}</div>{% endif %}
+    {% if personal.github %}<div>{{ personal.github }}</div>{% endif %}
+  </div>
+</div>
+
+{% if cv.summary %}<div class="summary">{{ cv.summary }}</div>{% endif %}
+
+{% if cv.experience %}
+<div class="section">
+  <div class="section-title">Experience</div>
+  {% for job in cv.experience %}
+  <div class="exp-item">
+    <div class="exp-line">
+      <h3>{{ job.title }}, {{ job.company }}</h3>
+      <span class="dates">{{ job.period }}</span>
+    </div>
+    {% if job.bullets %}<ul class="exp-bullets">{% for b in job.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if cv.skills %}
+<div class="section">
+  <div class="section-title">Skills</div>
+  <div class="skills-inline">{{ cv.skills | join(' · ') }}</div>
+</div>
+{% endif %}
+
+<div class="bottom-grid">
+<div>
+{% if cv.education %}
+<div class="section">
+  <div class="section-title">Education</div>
+  {% for e in cv.education %}
+  <div style="margin-bottom:4px;font-size:0.8rem">
+    <strong>{{ e.degree }}</strong><br>
+    <span style="color:#9ca3af">{{ e.institution }}{% if e.period %}, {{ e.period }}{% endif %}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+</div>
+<div>
+{% if certifications %}
+<div class="section">
+  <div class="section-title">Certifications</div>
+  {% for c in certifications %}<div style="font-size:0.8rem">{{ c.name }}{% if c.year %} ({{ c.year }}){% endif %}</div>{% endfor %}
+</div>
+{% endif %}
+{% if languages %}
+<div class="section">
+  <div class="section-title">Languages</div>
+  {% for l in languages %}<div style="font-size:0.8rem">{{ l.name }} – {{ l.level }}</div>{% endfor %}
+</div>
+{% endif %}
+</div>
+</div>
+
+{% if cv.projects %}
+<div class="section">
+  <div class="section-title">Projects</div>
+  {% for p in cv.projects %}
+  <div style="margin-bottom:4px;font-size:0.8rem"><strong>{{ p.name }}</strong> – {{ p.description }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+</div></body></html>

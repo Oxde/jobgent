@@ -25,6 +25,7 @@ class ScoreOutput(BaseModel):
     timing: int = Field(ge=0, le=15)
     reasons: list[str]
     gaps: list[str]
+    keywords: list[str] = Field(default_factory=list)
 
 
 def profile_for_prompt(profile: Profile) -> str:
@@ -57,6 +58,7 @@ def score_job(session: Session, llm: LLM, model: str, profile: Profile, job: Job
         session.add(match)
     match.skills, match.role, match.lang_loc, match.timing = out.skills, out.role, out.lang_loc, out.timing
     match.reasons, match.gaps, match.model = out.reasons, out.gaps, model
+    match.keywords = out.keywords
     match.total = total_score(out, bool(job.dutch_plus))
     session.commit()
     return match

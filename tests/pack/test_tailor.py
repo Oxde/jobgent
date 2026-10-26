@@ -51,3 +51,30 @@ def test_render_cv_html_custom_template(tmp_path):
     t.write_text("<html><body>{{ personal.name }} / {{ cv.summary }}</body></html>")
     html = render_cv_html(profile(), tailored(), template_path=t)
     assert html == "<html><body>Test Student / Math student who builds bots.</body></html>"
+
+
+def test_general_cv_builds_from_profile_without_llm():
+    from jobgent.pack.tailor import general_cv
+
+    p = profile()
+    p.summary = "Math student who builds bots."
+    p.skills = [__import__("jobgent.profile.models", fromlist=["Skill"]).Skill(name="Python", evidence="bots")]
+    cv = general_cv(p)
+    assert cv.summary == "Math student who builds bots." and cv.skills == ["Python"]
+    assert cv.experience == p.experience and cv.education == p.education and cv.change_summary == []
+    html = render_cv_html(p, cv, template_path=None)
+    assert "Python" in html and "Test Student" in html
+
+
+def test_all_templates_render_profile():
+    import pytest as _pt
+
+    from jobgent.pack.render import list_templates, render_cv_html
+
+    ids = [t.id for t in list_templates()]
+    assert set(ids) >= {"modern", "classic", "minimal", "creative", "tech", "executive", "compact", "two-column"}
+    for tid in ids:
+        html = render_cv_html(profile(), tailored(), template_path=None, template_id=tid)
+        assert "Test Student" in html and "Built a bot" in html and "size: A4" in html, tid
+    with _pt.raises(KeyError, match="nope"):
+        render_cv_html(profile(), tailored(), template_path=None, template_id="nope")

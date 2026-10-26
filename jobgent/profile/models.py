@@ -20,6 +20,7 @@ DEFAULT_KEYWORDS = [
 
 class Personal(BaseModel):
     name: str
+    headline: str = ""
     location: str = ""
     email: str = ""
     phone: str = ""
@@ -66,6 +67,7 @@ def _default_types() -> list[InternshipType]:
 
 class Preferences(BaseModel):
     weekly_goal: int = 10
+    template: str = "default"
     remote_ok: bool = True
     eu_citizen: bool | None = None
 
@@ -85,6 +87,7 @@ class SearchProfile(BaseModel):
 class Profile(BaseModel):
     verified: bool = False
     personal: Personal
+    summary: str = ""
     education: list[Education] = Field(default_factory=list)
     experience: list[Experience] = Field(default_factory=list)
     projects: list[Project] = Field(default_factory=list)

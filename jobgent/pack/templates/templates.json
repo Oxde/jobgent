@@ -1,0 +1,50 @@
+[
+ {
+  "id": "modern",
+  "name": "Modern",
+  "description": "Clean modern design with accent color sidebar header",
+  "color": "#2563eb"
+ },
+ {
+  "id": "classic",
+  "name": "Classic",
+  "description": "Traditional professional layout, timeless and elegant",
+  "color": "#1f2937"
+ },
+ {
+  "id": "minimal",
+  "name": "Minimal",
+  "description": "Ultra-clean with maximum whitespace, content-focused",
+  "color": "#111827"
+ },
+ {
+  "id": "creative",
+  "name": "Creative",
+  "description": "Bold design with color blocks, perfect for designers and creatives",
+  "color": "#7c3aed"
+ },
+ {
+  "id": "tech",
+  "name": "Tech",
+  "description": "Developer-focused with monospace accents, dark header, code-inspired",
+  "color": "#0f172a"
+ },
+ {
+  "id": "executive",
+  "name": "Executive",
+  "description": "Premium layout for senior professionals, gold accents",
+  "color": "#92400e"
+ },
+ {
+  "id": "compact",
+  "name": "Compact",
+  "description": "Dense single-page layout, fits maximum content",
+  "color": "#059669"
+ },
+ {
+  "id": "two-column",
+  "name": "Two Column",
+  "description": "Professional two-column layout with sidebar",
+  "color": "#dc2626"
+ }
+]
