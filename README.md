@@ -79,6 +79,16 @@ Agents (the built-in chat, the tailoring step, and Claude/ChatGPT over MCP via `
 
 Your profile (`~/.jobgent/profile/profile.yaml`) is the only source of truth. For each job the model selects, orders and rephrases profile facts; a second pass lists any claim not backed by the profile and the pack fails if there is one. The CV must fit one A4 page (one automatic retry, then an error). Put your own Jinja2 template at `~/.jobgent/profile/master_cv.html` (variables: `personal`, `cv`, `languages`) to keep your own design.
 
+## Agent skills
+
+`.agents/skills/` holds skills that coding agents (Claude Code, Codex, Cursor …) load when working in this repo:
+
+- `jobgent-cv-writing` (ours): the rules that override everything else. Facts only from the profile, never an estimated number, gaps stated honestly. Points to `jobgent/guides/cv-writing.md`.
+- From [ResumeSkills](https://github.com/Paramchoudhary/ResumeSkills) by Param Choudhary (MIT): ATS optimizer, bullet writer, tailor, cover letter, job-description analyzer, interview prep, tech CV optimizer, formatter, LinkedIn optimizer, application forms, cold email, section builder, version manager, portfolio case study. Their number-estimation advice is overridden by `jobgent-cv-writing`; `resume-quantifier` is not installed for that reason.
+- `frontend-design` ([anthropics/skills](https://github.com/anthropics/skills)) and `ui-ux-pro-max` for UI work.
+
+Install or update them with `npx skills add <repo>`; `skills-lock.json` pins them.
+
 ## Not yet
 
 - Indeed and a generic careers-page fallback (companies not on the six ATSs are reachable via LinkedIn or `job_add`).
