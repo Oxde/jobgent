@@ -75,6 +75,7 @@ def _default_types() -> list[InternshipType]:
 class Preferences(BaseModel):
     weekly_goal: int = 10
     template: str = "default"
+    tone: str = "warm"
     remote_ok: bool = True
     eu_citizen: bool | None = None
 
@@ -96,6 +97,7 @@ class Profile(BaseModel):
     personal: Personal
     summary: str = ""
     skills_note: str = ""
+    facts: list[str] = Field(default_factory=list)  # "Facts about me": used by the AI, never printed on the CV
     education: list[Education] = Field(default_factory=list)
     experience: list[Experience] = Field(default_factory=list)
     projects: list[Project] = Field(default_factory=list)

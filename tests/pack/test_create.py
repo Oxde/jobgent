@@ -9,6 +9,7 @@ from jobgent.errors import ProfileNotVerifiedError, JobgentError
 from jobgent.llm import FakeLLM
 from jobgent.pack.create import create_pack
 from jobgent.pack.letter import CoverLetter
+from jobgent.pack.review import Review, ReviewEdit
 from jobgent.pack.tailor import TailoredCV
 from jobgent.pack.verify import VerifyOutput
 from jobgent.profile.models import Personal, Profile, SearchProfile
@@ -29,11 +30,16 @@ def setup(tmp_path: Path, verified: bool):
     return settings, store, Session
 
 
+def no_edits() -> Review:
+    return Review(edits=[], missed_keywords="none", company_angle="fine", passive_phrasing="none", tone="fine")
+
+
 def responses(n_tailor: int = 1) -> list:
-    out: list = []
-    for _ in range(n_tailor):
+    """Order: tailor, letter, review, verify CV, verify letter; each retry adds tailor + verify CV."""
+    out: list = [TailoredCV(summary="S", skills=["Python"], change_summary=["x"]), CoverLetter(body="Dear Acme"), no_edits(),
+                 VerifyOutput(unsupported_claims=[]), VerifyOutput(unsupported_claims=[])]
+    for _ in range(n_tailor - 1):
         out += [TailoredCV(summary="S", skills=["Python"], change_summary=["x"]), VerifyOutput(unsupported_claims=[])]
-    out += [CoverLetter(body="Dear Acme"), VerifyOutput(unsupported_claims=[])]
     return out
 
 
@@ -73,7 +79,7 @@ def test_retries_once_when_two_pages(tmp_path):
     llm = FakeLLM(responses(n_tailor=2))
     with Session() as s:
         result = create_pack(settings, s, llm, store, job_id=1, pdf=FakePdf([2, 1]))
-    assert result.cv_pdf.is_file() and llm.calls == 6
+    assert result.cv_pdf.is_file() and llm.calls == 7
 
 
 def test_fails_when_still_two_pages(tmp_path):
@@ -86,3 +92,59 @@ def test_unknown_job(tmp_path):
     settings, store, Session = setup(tmp_path, verified=True)
     with Session() as s, pytest.raises(JobgentError, match="999"):
         create_pack(settings, s, FakeLLM([]), store, job_id=999, pdf=FakePdf([1]))
+
+
+def test_reviewer_edits_are_applied_and_recorded(tmp_path):
+    settings, store, Session = setup(tmp_path, verified=True)
+    review = Review(edits=[ReviewEdit(unit="summary", old="S", new="Student who builds Python tools", reason="specific"),
+                           ReviewEdit(unit="letter", old="Dear Acme", new="Dear Acme team", reason="warmer"),
+                           ReviewEdit(unit="experience[5].bullets[0]", old="x", new="y", reason="no such unit")],
+                    missed_keywords="Python not in summary", company_angle="mention internal tools", passive_phrasing="none", tone="ok")
+    llm = FakeLLM([TailoredCV(summary="S", skills=["Python"], change_summary=["x"]), CoverLetter(body="Dear Acme"), review,
+                   VerifyOutput(), VerifyOutput()])
+    with Session() as s:
+        r = create_pack(settings, s, llm, store, job_id=1, pdf=FakePdf([1]))
+    assert r.letter_md.read_text() == "Dear Acme team"
+    assert "Student who builds Python tools" in r.cv_html.read_text()
+    assert r.review_applied == ["summary", "letter"] and r.review_skipped == ["experience[5].bullets[0]"]
+    assert r.review_notes["company_angle"] == "mention internal tools"
+
+
+def test_banned_phrases_trigger_one_rewrite(tmp_path):
+    settings, store, Session = setup(tmp_path, verified=True)
+    llm = FakeLLM([TailoredCV(summary="S", skills=["Python"]), CoverLetter(body="I am passionate about AI — truly."), no_edits(),
+                   CoverLetter(body="I build AI tools."), VerifyOutput(), VerifyOutput()])
+    with Session() as s:
+        r = create_pack(settings, s, llm, store, job_id=1, pdf=FakePdf([1]))
+    assert r.letter_md.read_text() == "I build AI tools."
+    assert "passionate" in llm.prompts[3][1]
+
+
+def test_invented_number_stops_the_pack_before_any_pdf(tmp_path):
+    settings, store, Session = setup(tmp_path, verified=True)
+    pdf = FakePdf([1])
+    llm = FakeLLM([TailoredCV(summary="Raised revenue by 37%", skills=["Python"]), CoverLetter(body="Dear Acme"), no_edits()])
+    with Session() as s, pytest.raises(JobgentError, match="37%"):
+        create_pack(settings, s, llm, store, job_id=1, pdf=pdf)
+    assert pdf.calls == 0
+
+
+def test_unknown_names_are_marked_for_checking(tmp_path):
+    settings, store, Session = setup(tmp_path, verified=True)
+    llm = FakeLLM([TailoredCV(summary="Built tools with Terraform", skills=["Python"]), CoverLetter(body="Dear Acme"), no_edits(),
+                   VerifyOutput(), VerifyOutput()])
+    with Session() as s:
+        r = create_pack(settings, s, llm, store, job_id=1, pdf=FakePdf([1]))
+    assert "Terraform" in r.check_this  # "Python" too: the test profile has no Python skill
+
+
+def test_note_tone_and_facts_reach_the_letter(tmp_path):
+    settings, store, Session = setup(tmp_path, verified=True)
+    store.update("facts", ["Available from 1 February 2027, 40 hours a week"])
+    with Session() as s:
+        s.add(Application(job_id=1, status=Status.liked, ai_note="I met their CTO at a meetup", tone="direct"))
+        s.commit()
+        llm = FakeLLM(responses())
+        create_pack(settings, s, llm, store, job_id=1, pdf=FakePdf([1]))
+    system, user = llm.prompts[1]
+    assert "I met their CTO" in user and "Available from 1 February 2027" in user and "Direct" in system

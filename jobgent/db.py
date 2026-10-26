@@ -50,11 +50,15 @@ class Job(Base):
     months: Mapped[int | None] = mapped_column(nullable=True)
     paid: Mapped[bool | None] = mapped_column(nullable=True)
     classified_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    live_status: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    live_checked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    deadline: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     match: Mapped[Match | None] = relationship(back_populates="job", uselist=False, cascade="all, delete-orphan")
     application: Mapped[Application | None] = relationship(
         back_populates="job", uselist=False, cascade="all, delete-orphan"
     )
+    evaluation: Mapped[Evaluation | None] = relationship(back_populates="job", uselist=False, cascade="all, delete-orphan")
 
 
 class Match(Base):
@@ -76,6 +80,26 @@ class Match(Base):
     job: Mapped[Job] = relationship(back_populates="match")
 
 
+class Evaluation(Base):
+    """Gates, requirement table and verdict for one posting (see jobgent.evaluate)."""
+
+    __tablename__ = "evaluations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"), unique=True)
+    gates: Mapped[list[dict[str, str]]] = mapped_column(JSON, default=list)
+    requirements: Mapped[list[dict[str, str]]] = mapped_column(JSON, default=list)
+    coverage: Mapped[int] = mapped_column(default=0)
+    verdict: Mapped[str] = mapped_column(String(16))
+    verdict_reason: Mapped[str] = mapped_column(Text, default="")
+    summary: Mapped[str] = mapped_column(Text, default="")
+    deadline: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    model: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    job: Mapped[Job] = relationship(back_populates="evaluation")
+
+
 class Application(Base):
     __tablename__ = "applications"
 
@@ -85,6 +109,10 @@ class Application(Base):
     pack_dir: Mapped[str | None] = mapped_column(Text, nullable=True)
     applied_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     notes: Mapped[str] = mapped_column(Text, default="")
+    ai_note: Mapped[str] = mapped_column(Text, default="")  # "anything I should know?" for this application; sent to the AI
+    tone: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    furthest_stage: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    interview_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
 
     job: Mapped[Job] = relationship(back_populates="application")

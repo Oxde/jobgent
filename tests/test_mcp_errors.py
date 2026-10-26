@@ -9,6 +9,7 @@ from fastmcp import Client
 from jobgent.llm import FakeLLM
 from jobgent.mcp_server import build_mcp
 from jobgent.pack.letter import CoverLetter
+from jobgent.pack.review import Review
 from jobgent.pack.tailor import TailoredCV
 from jobgent.pack.verify import VerifyOutput
 from jobgent.profile.models import Personal, Profile, SearchProfile
@@ -30,7 +31,7 @@ def test_unverified_profile_message_reaches_agent(services):
 
 
 def test_invented_claim_is_named_for_agent(services):
-    fake = FakeLLM([TailoredCV(summary="S", skills=["Kubernetes"], change_summary=["x"]),
+    fake = FakeLLM([TailoredCV(summary="S", skills=["Kubernetes"], change_summary=["x"]), CoverLetter(body="Dear Acme"), Review(),
                     VerifyOutput(unsupported_claims=["Kubernetes experience"])])
     services.llm_factory = lambda: fake
     with pytest.raises(Exception, match="Kubernetes"):
@@ -51,8 +52,8 @@ def test_missing_key_is_named_for_agent(services):
 @pytest.mark.slow
 def test_pack_create_renders_real_pdf_inside_mcp_loop(services):
     pytest.importorskip("playwright")
-    fake = FakeLLM([TailoredCV(summary="S", skills=["Python"], change_summary=["x"]), VerifyOutput(),
-                    CoverLetter(body="Dear Acme"), VerifyOutput()])
+    fake = FakeLLM([TailoredCV(summary="S", skills=["Python"], change_summary=["x"]), CoverLetter(body="Dear Acme"), Review(),
+                    VerifyOutput(), VerifyOutput()])
     services.llm_factory = lambda: fake
     try:
         result = call(build_mcp(services), "pack_create", {"job_id": 1})
