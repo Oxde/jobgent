@@ -50,6 +50,18 @@ def render_cv_html(
 ) -> str:
     """`editable` marks every field with its profile path (data-path) so the preview can be edited in place.
     Only meaningful for the untailored CV, where list positions equal profile positions."""
+    by_name = {sk.name: (i, sk.category) for i, sk in enumerate(profile.skills)}
+    groups: list[tuple[str, list[tuple[str, int]]]] = []  # (category, [(name, profile index or -1)])
+    for name in cv.skills:
+        index, category = by_name.get(name, (-1, ""))
+        if groups and groups[-1][0] == category:
+            groups[-1][1].append((name, index))
+        else:
+            existing = next((g for g in groups if g[0] == category), None)
+            if existing:
+                existing[1].append((name, index))
+            else:
+                groups.append((category, [(name, index)]))
     path = template_path or template_file(template_id)
     env = Environment(loader=FileSystemLoader(str(path.parent)), autoescape=select_autoescape(["html"]))
     template = env.get_template(path.name)
@@ -57,6 +69,7 @@ def render_cv_html(
         personal=profile.personal,
         headline=profile.personal.headline,
         skills_note=profile.skills_note,
+        skill_groups=groups,
         cv=cv,
         languages=profile.languages,
         certifications=[],

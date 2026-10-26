@@ -4,6 +4,9 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { api, STATUSES, type Status } from "../lib/api";
 import { useLoad, useStore } from "../lib/store";
 import { ErrorNote, Score, STATUS_LABEL } from "../components/ui";
+import CvCanvas from "../components/CvCanvas";
+
+type RightTab = "cv" | "letter" | "posting";
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -13,6 +16,7 @@ export default function JobDetail() {
   const [notes, setNotes] = useState("");
   const [packBusy, setPackBusy] = useState(false);
   const [packError, setPackError] = useState<string | null>(null);
+  const [right, setRight] = useState<RightTab>("cv");
 
   if (error) return <div className="p-7"><Link to="/jobs" className="btn btn-quiet btn-sm mb-3"><ArrowLeft size={14} /> Jobs</Link><ErrorNote message={error} /></div>;
   if (!data) return <div className="p-7 text-text-2">Loading…</div>;
@@ -96,7 +100,7 @@ export default function JobDetail() {
                 </div>
                 <p className="mb-3 break-all text-[12px] text-text-3">{pack.dir}</p>
                 {pack.change_summary.length > 0 && <><h3 className="mb-1 text-[13px] font-bold text-text-2">What changed in the CV</h3><ul className="mb-3 list-disc pl-5">{pack.change_summary.map((c) => <li key={c}>{c}</li>)}</ul></>}
-                {letter && <><h3 className="mb-1 text-[13px] font-bold text-text-2">Cover letter</h3><pre className="whitespace-pre-wrap rounded-lg border border-line bg-bg-3 p-3 font-sans text-[13.5px]">{letter}</pre></>}
+                {letter && <button className="btn btn-sm" onClick={() => setRight("letter")}>Read the cover letter</button>}
               </>
             ) : (
               <>
@@ -108,9 +112,33 @@ export default function JobDetail() {
           </section>
         </div>
 
-        <section className="panel xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-auto">
-          <h2 className="mb-2 text-[15px] font-bold">The posting</h2>
-          <pre className="whitespace-pre-wrap font-sans text-[13px] text-text-2">{job.description}</pre>
+        <section className="flex min-h-[70vh] flex-col xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)]">
+          <div className="mb-2 flex items-center gap-1" role="tablist">
+            {([["cv", pack ? "Tailored CV" : "CV"], ["letter", "Cover letter"], ["posting", "Posting"]] as [RightTab, string][]).map(([k, label]) => (
+              <button key={k} role="tab" aria-selected={right === k} onClick={() => setRight(k)}
+                className={`min-h-[36px] rounded-lg px-3 text-[13.5px] font-medium ${right === k ? "bg-bg-3 text-text" : "text-text-2 hover:text-text"}`}>{label}</button>
+            ))}
+            {pack && right === "cv" && <a className="btn btn-sm ml-auto" href={`/packs/${job.id}/cv.pdf`} target="_blank" rel="noopener">PDF</a>}
+          </div>
+          {right === "cv" && (
+            <>
+              {!pack && <p className="mb-2 text-[12.5px] text-text-2">Your general CV. "Write CV + cover letter" makes a version tailored to this posting.</p>}
+              <CvCanvas template="" editable={false} src={`/api/jobs/${job.id}/cv`} />
+            </>
+          )}
+          {right === "letter" && (
+            <div className="panel min-h-0 flex-1 overflow-auto">
+              {letter
+                ? <pre className="whitespace-pre-wrap font-sans text-[14px] leading-relaxed">{letter}</pre>
+                : <p className="text-text-2">No cover letter yet. "Write CV + cover letter" on the left writes one from your profile and this posting.</p>}
+            </div>
+          )}
+          {right === "posting" && (
+            <div className="panel min-h-0 flex-1 overflow-auto">
+              {job.url && <a className="btn btn-sm mb-3" href={job.url} target="_blank" rel="noopener">Open the original posting <ExternalLink size={13} /></a>}
+              <pre className="whitespace-pre-wrap font-sans text-[13px] text-text-2">{job.description}</pre>
+            </div>
+          )}
         </section>
       </div>
     </div>

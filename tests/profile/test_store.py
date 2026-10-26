@@ -161,3 +161,25 @@ def test_language_strings_in_all_shapes():
     assert (_language("Dutch (Beginner)").name, _language("Dutch (Beginner)").level) == ("Dutch", "Beginner")
     assert (_language("Russian - Native").name, _language("Russian - Native").level) == ("Russian", "Native")
     assert _language("German").name == "German"
+
+
+def test_import_grouped_skills(tmp_path):
+    store = ProfileStore(tmp_path)
+    p = store.import_jobkiller_html(Path(__file__).parent.parent / "fixtures" / "jobkiller_cv_grouped.html")
+    cats = {}
+    for s in p.skills:
+        cats.setdefault(s.category, []).append(s.name)
+    assert cats["GenAI & AI Tools"][:2] == ["LangChain", "GitHub Copilot"]
+    assert "Python" in cats["Programming"] and "Docker" in cats["Infrastructure"]
+    assert p.skills_note.startswith("Excellent communication")
+    assert all(s.category for s in p.skills), [s.name for s in p.skills if not s.category]
+
+
+def test_checklist_no_longer_requires_skill_evidence():
+    from jobgent.profile.store import completeness
+    from jobgent.profile.models import Skill
+
+    p = make_profile()
+    p.skills = [Skill(name=f"s{i}") for i in range(8)]
+    item = next(c for c in completeness(p) if c.label.startswith("Skills"))
+    assert item.done and "evidence" not in item.label.lower()

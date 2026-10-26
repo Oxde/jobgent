@@ -7,11 +7,12 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from jobgent.db import Job
+from jobgent.guides import cv_writing_guide
 from jobgent.llm import LLM
 from jobgent.profile.models import Education, Experience, Profile, Project
 from jobgent.score import profile_for_prompt
 
-_PROMPT = (Path(__file__).parent.parent / "prompts" / "tailor.md").read_text()
+_PROMPT = (Path(__file__).parent.parent / "prompts" / "tailor.md").read_text() + "\n\n" + cv_writing_guide()
 
 
 class TailoredCV(BaseModel):
@@ -55,7 +56,15 @@ def general_cv(profile: Profile) -> TailoredCV:
         summary=profile.summary,
         experience=list(profile.experience),
         projects=list(profile.projects),
-        skills=[s.name for s in profile.skills],
+        skills=[s.name for s in sorted(profile.skills, key=lambda s: _first_index(profile, s.category))],
         education=list(profile.education),
         change_summary=[],
     )
+
+
+def _first_index(profile: Profile, category: str) -> int:
+    """Keep categories together, in the order they first appear in the profile."""
+    for i, s in enumerate(profile.skills):
+        if s.category == category:
+            return i
+    return len(profile.skills)

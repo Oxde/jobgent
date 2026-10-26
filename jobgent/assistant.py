@@ -7,10 +7,11 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, Field
 
+from jobgent.guides import cv_writing_guide
 from jobgent.llm import LLM
 from jobgent.profile.store import ProfileStore
 
-_PROMPT = (Path(__file__).parent / "prompts" / "assistant.md").read_text()
+_PROMPT = (Path(__file__).parent / "prompts" / "assistant.md").read_text() + "\n\n" + cv_writing_guide()
 Turn = tuple[str, str]  # (role, text)
 
 

@@ -19,15 +19,18 @@
             color: #000;
             max-width: 210mm;
             margin: 0 auto;
-            padding: 0.35in;
+            padding: 0.4in 0.45in;
             background: white;
-            font-size: 12pt;
+            font-size: 10.8pt;
         }
         
         .header {
             margin-bottom: 0.2in;  
         }
         
+        .header-row { display: flex; align-items: flex-end; gap: 0.3in; }
+        .header-row > .contact-info { flex: 1 1 auto; }
+        .header-row > .name-cell { flex: 0 0 auto; padding-right: 0.2in; }
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -59,7 +62,7 @@
         }
         
         .name {
-            font-size: 20pt;
+            font-size: 18pt;
             font-weight: bold;
             color: #2E7D32;
             line-height: 0.8;
@@ -67,13 +70,13 @@
         }
         
         .professional-title {
-            font-size: 12pt;
+            font-size: 10.8pt;
             font-weight: bold;
             color: #000;
         }
         
         .contact-info {
-            font-size: 11.5pt;
+            font-size: 10.3pt;
             line-height: 1.3;  
             color: #666;
         }
@@ -88,14 +91,14 @@
         }
         
         .objective {
-            font-size: 12pt;
+            font-size: 10.8pt;
             text-align: justify;
             margin-bottom: 0.18in;  
             line-height: 1.4;  
         }
         
         .section-title {
-            font-size: 13.5pt;
+            font-size: 12pt;
             font-weight: bold;
             color: #2E7D32;
             margin-bottom: 0.1in;  
@@ -116,18 +119,18 @@
         }
         
         .job-title {
-            font-size: 12pt;
+            font-size: 10.8pt;
             font-weight: bold;
         }
         
         .job-date {
-            font-size: 12pt;
+            font-size: 10.8pt;
             font-style: italic;
             text-align: right;
         }
         
         .job-bullets {
-            font-size: 12pt;
+            font-size: 10.8pt;
             padding-left: 0;
             list-style: none;
             line-height: 1.35;  
@@ -153,7 +156,7 @@
             display: flex;
             justify-content: space-between;
             align-items: baseline;
-            font-size: 12pt;
+            font-size: 10.8pt;
             font-weight: bold;
             margin-bottom: 4pt;
         }
@@ -163,12 +166,12 @@
         }
         
         .degree-details {
-            font-size: 12pt;
+            font-size: 10.8pt;
             line-height: 1.35;  
         }
         
         .skills-content {
-            font-size: 12pt;
+            font-size: 10.8pt;
             line-height: 1.4;  
             text-align: justify;
             margin-bottom: 0.1in;  
@@ -179,7 +182,7 @@
         }
         
         .projects-list {
-            font-size: 12pt;
+            font-size: 10.8pt;
             padding-left: 0;
             list-style: none;
             line-height: 1.35;  
@@ -212,31 +215,29 @@
         .contact-info a, .linkedin a { color: #0066CC; text-decoration: underline; }
         .project-title a { color: #000; text-decoration: underline; font-weight: bold; }
 
+
+        .header-row .name-cell { width: auto; white-space: nowrap; padding-right: 0.25in; }
+        .header-row .contact-info { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>
 </head>
 <body>
     {% set parts = personal.name.split(' ', 1) %}
     <div class="header">
-        <table class="header-table">
-            <tr>
-                <td class="name-cell">
-                    <div class="name"{{ dp('personal.name') }}>{{ parts[0] }}{% if parts | length > 1 %}<br>{{ parts[1] }}{% endif %}</div>
-                    {% if headline or editable %}<div class="professional-title"{{ dp('personal.headline') }}>{{ headline }}</div>{% endif %}
-                </td>
-                <td class="location-cell contact-info">
-                    {% if personal.location %}<div>Location: <span{{ dp('personal.location') }}>{{ personal.location }}</span></div>{% endif %}
-                    {% if personal.birth_date %}<div>Date of birth: <span{{ dp('personal.birth_date') }}>{{ personal.birth_date }}</span></div>{% endif %}
-                </td>
-                <td class="contact-cell contact-info">
-                    {% if personal.phone %}<div>Number: <span{{ dp('personal.phone') }}>{{ personal.phone }}</span></div>{% endif %}
-                    {% if personal.email %}<div{{ dp('personal.email') }}>{{ personal.email }}</div>{% endif %}
-                </td>
-                <td class="links-cell contact-info">
-                    {% if personal.linkedin %}<div><span class="linkedin"><a href="{{ personal.linkedin if personal.linkedin.startswith('http') else 'https://' ~ personal.linkedin }}">LinkedIn</a></span></div>{% endif %}
-                    {% if personal.github %}<div><a href="{{ personal.github }}">GitHub</a></div>{% endif %}
-                </td>
-            </tr>
-        </table>
+        <div class="header-row">
+            <div class="name-cell">
+                <div class="name"{{ dp('personal.name') }}>{{ parts[0] }}{% if parts | length > 1 %}<br>{{ parts[1] }}{% endif %}</div>
+                {% if headline or editable %}<div class="professional-title"{{ dp('personal.headline') }}>{{ headline }}</div>{% endif %}
+            </div>
+            <div class="contact-info">
+                {% if personal.location %}<div{{ dp('personal.location') }}>{{ personal.location }}</div>{% endif %}
+                {% if personal.phone %}<div{{ dp('personal.phone') }}>{{ personal.phone }}</div>{% endif %}
+                {% if personal.email %}<div{{ dp('personal.email') }}>{{ personal.email }}</div>{% endif %}
+            </div>
+            <div class="contact-info">
+                {% if personal.linkedin %}{% set li = personal.linkedin | replace('https://', '') | replace('http://', '') | replace('www.', '') %}<div><a href="https://{{ li }}">{{ li }}</a></div>{% endif %}
+                {% if personal.github %}{% set gh = personal.github | replace('https://', '') | replace('http://', '') | replace('www.', '') %}<div><a href="https://{{ gh }}">{{ gh }}</a></div>{% endif %}
+            </div>
+        </div>
     </div>
 
     {% if cv.summary or editable %}<div class="objective"{{ dp('summary') }}>{{ cv.summary }}</div>{% endif %}
@@ -269,7 +270,7 @@
 
     {% if cv.skills %}
     <div class="section-title">Skills</div>
-    <div class="skills-content">{% for s in cv.skills %}<span{{ dp('skills[%d].name' % loop.index0) }}>{{ s }}</span>{% if not loop.last %} • {% endif %}{% endfor %}{% if skills_note %} | <span class="skills-highlight"{{ dp('skills_note') }}>{{ skills_note }}</span>{% endif %}</div>
+    <div class="skills-content">{% for category, items in skill_groups %}{% if category %}<b{% if editable and items[0][1] >= 0 %}{{ dp('skills[%d].category' % items[0][1]) }}{% endif %}>{{ category }}</b>: {% endif %}{% for name, idx in items %}<span{% if idx >= 0 %}{{ dp('skills[%d].name' % idx) }}{% endif %}>{{ name }}</span>{% if not loop.last %} • {% endif %}{% endfor %}{% if not loop.last %} | {% endif %}{% endfor %}{% if skills_note %} | <span class="skills-highlight"{{ dp('skills_note') }}>{{ skills_note }}</span>{% endif %}</div>
     {% endif %}
 
     {% if cv.projects %}

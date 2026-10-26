@@ -9,7 +9,7 @@ const A4_H = 1123; // 297mm
  * The CV as real A4 pages, scaled to fit the column, editable in place.
  * Reloads whenever the profile changes anywhere (this page, the chat, Claude over MCP).
  */
-export default function CvCanvas({ template, editable }: { template: string; editable: boolean }) {
+export default function CvCanvas({ template, editable, src: fixedSrc }: { template: string; editable: boolean; src?: string }) {
   const { bumpProfile } = useStore();
   const wrap = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
@@ -80,7 +80,7 @@ export default function CvCanvas({ template, editable }: { template: string; edi
   }
 
   const pages = Math.ceil(height / A4_H);
-  const src = `/api/cv/preview?template=${encodeURIComponent(template)}${editable ? "&edit=1" : ""}&n=${nonce}`;
+  const src = fixedSrc ? `${fixedSrc}${fixedSrc.includes("?") ? "&" : "?"}n=${nonce}` : `/api/cv/preview?template=${encodeURIComponent(template)}${editable ? "&edit=1" : ""}&n=${nonce}`;
 
   return (
     <div ref={wrap} className="relative min-h-0 overflow-auto rounded-xl bg-[#2a2f3a] p-6">

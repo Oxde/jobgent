@@ -152,3 +152,14 @@ def test_cv_pdf_download(services, monkeypatch):
     r = client(services).get("/api/cv/pdf?template=times")
     assert r.status_code == 200 and r.headers["content-type"] == "application/pdf" and r.content.startswith(b"%PDF")
     assert client(services).get("/api/cv/pdf?template=nope").status_code == 400
+
+
+def test_job_cv_preview_falls_back_to_general_cv(services):
+    c = client(services)
+    r = c.get("/api/jobs/1/cv")
+    assert r.status_code == 200 and "<html" in r.text.lower() and "T" in r.text
+    assert c.get("/api/jobs/999/cv").status_code == 404
+    pack_dir = services.settings.applications_dir / "acme-ai-intern-1"
+    pack_dir.mkdir(parents=True)
+    (pack_dir / "cv.html").write_text("<html><body>tailored for acme</body></html>")
+    assert "tailored for acme" in c.get("/api/jobs/1/cv").text

@@ -228,6 +228,20 @@ def build_api(services: Services) -> APIRouter:
         letter = pack.letter_md.read_text() if pack and pack.letter_md.is_file() else None
         return JobPage(job=job, dims=dims, ats=_ats_for(job_id), pack=pack, letter=letter)
 
+    @api.get("/jobs/{job_id}/cv", response_class=HTMLResponse)
+    def job_cv(job_id: int) -> HTMLResponse:
+        """The CV for this job: the tailored one if a pack exists, otherwise the general CV in the chosen template."""
+        with services.sessionmaker() as s:
+            try:
+                db_job = get_job(s, job_id)
+            except JobgentError as e:
+                raise HTTPException(status_code=404, detail=str(e)) from e
+            tailored = pack_dir_for(services.settings, db_job) / "cv.html"
+        if tailored.is_file():
+            return HTMLResponse(tailored.read_text())
+        profile = services.store.load()
+        return HTMLResponse(render_cv_html(profile, general_cv(profile), services.store.master_cv_path(), profile.preferences.template))
+
     @api.post("/jobs/{job_id}/pack")
     def make_pack(job_id: int) -> PackResult:
         with services.sessionmaker() as s:

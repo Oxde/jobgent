@@ -74,6 +74,9 @@ Jobs are de-duplicated across sources (the company's own posting wins). Then a m
 
 ## How the CV is made
 
+Agents (the built-in chat, the tailoring step, and Claude/ChatGPT over MCP via `cv_writing_guide`) follow `jobgent/guides/cv-writing.md`: ATS rules, structure, the bullet formula, and a tailoring pattern taken from 36 real tailored CVs (summary and skills always, title usually, bullets sometimes).
+
+
 Your profile (`~/.jobgent/profile/profile.yaml`) is the only source of truth. For each job the model selects, orders and rephrases profile facts; a second pass lists any claim not backed by the profile and the pack fails if there is one. The CV must fit one A4 page (one automatic retry, then an error). Put your own Jinja2 template at `~/.jobgent/profile/master_cv.html` (variables: `personal`, `cv`, `languages`) to keep your own design.
 
 ## Not yet

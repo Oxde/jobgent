@@ -56,6 +56,7 @@ class Project(BaseModel):
 
 class Skill(BaseModel):
     name: str
+    category: str = ""
     evidence: str = ""
 
 

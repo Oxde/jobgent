@@ -91,3 +91,37 @@ def test_editable_render_marks_profile_paths():
         assert 'data-path="education[0].degree"' in html, tid
         plain = render_cv_html(profile(), tailored(), template_path=None, template_id=tid)
         assert "data-path" not in plain, tid
+
+
+def test_times_template_groups_skills_by_category():
+    from jobgent.pack.render import render_cv_html
+    from jobgent.pack.tailor import general_cv
+    from jobgent.profile.models import Skill
+
+    p = profile()
+    p.skills = [Skill(name="Python", category="Programming"), Skill(name="SQL", category="Programming"), Skill(name="LangChain", category="AI")]
+    html = render_cv_html(p, general_cv(p), None, "times", editable=True)
+    assert "Programming</b>: " in html and "AI</b>: " in html
+    assert html.index("Python") < html.index("SQL") < html.index("LangChain")
+    assert 'data-path="skills[2].name"' in html and 'data-path="skills[2].category"' in html
+
+
+def test_tailor_prompt_includes_the_guide():
+    llm = FakeLLM([tailored()])
+    tailor_cv(llm, "m", profile(), job())
+    assert "Tailoring to one posting" in llm.prompts[0][0]
+
+
+def test_times_header_is_ats_safe():
+    from jobgent.pack.render import render_cv_html
+    from jobgent.pack.tailor import general_cv
+
+    p = profile()
+    p.personal.linkedin = "https://www.linkedin.com/in/test-student"
+    p.personal.github = "https://github.com/teststudent"
+    p.personal.birth_date = "01-01-2003"
+    html = render_cv_html(p, general_cv(p), None, "times")
+    head = html[html.index('<div class="header">'):html.index("</div>\n    </div>") if "</div>\n    </div>" in html else len(html)]
+    assert "<table" not in html
+    assert "linkedin.com/in/test-student" in html and "github.com/teststudent" in html
+    assert "01-01-2003" not in html

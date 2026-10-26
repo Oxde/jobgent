@@ -16,6 +16,7 @@ from jobgent.classify import classify_jobs
 from jobgent.db import Status
 from jobgent.fetch import FetchSummary, fetch_all
 from jobgent.pack.create import PackResult, create_pack, load_pack
+from jobgent.guides import cv_writing_guide
 from jobgent.pack.pdf import html_to_pdf
 from jobgent.pack.render import render_cv_html
 from jobgent.pack.tailor import general_cv
@@ -95,6 +96,13 @@ def build_mcp(services: Services) -> FastMCP:
     def profile_remove_item(section: str, index: int) -> Profile:
         """Remove entry `index` (0-based) from a list section. Check cv_outline for indexes first."""
         return services.store.remove(section, index)
+
+    @mcp.tool(name="cv_writing_guide")
+    @surface_errors
+    def cv_writing_guide_tool() -> str:
+        """Read this BEFORE writing or tailoring any CV text: ATS rules, structure, bullet formula, the user's own
+        tailoring pattern, cover-letter rules. Never invent facts."""
+        return cv_writing_guide()
 
     @mcp.tool()
     @surface_errors

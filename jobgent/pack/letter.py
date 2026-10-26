@@ -7,12 +7,13 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from jobgent.db import Job
+from jobgent.guides import cv_writing_guide
 from jobgent.llm import LLM
 from jobgent.pack.tailor import job_text
 from jobgent.profile.models import Profile
 from jobgent.score import profile_for_prompt
 
-_PROMPT = (Path(__file__).parent.parent / "prompts" / "letter.md").read_text()
+_PROMPT = (Path(__file__).parent.parent / "prompts" / "letter.md").read_text() + "\n\n" + cv_writing_guide()
 
 
 class CoverLetter(BaseModel):

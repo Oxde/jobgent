@@ -63,3 +63,14 @@ def test_cv_editing_tools(services):
     assert parse(added[0])["skills"][0]["name"] == "SQL"
     assert "skills[0].name: SQL" in outline[0].text and "personal.name: T" in outline[0].text
     assert parse(removed[0])["skills"] == []
+
+
+def test_cv_writing_guide_tool(services):
+    mcp = build_mcp(services)
+
+    async def go():
+        async with Client(mcp) as c:
+            return await c.call_tool("cv_writing_guide", {})
+
+    text = run(go())[0].text
+    assert "never write a skill" in text.lower() and "Tailoring to one posting" in text

@@ -183,10 +183,22 @@ class ProfileStore:
             raw = skills_html.group(1)
             note = re.search(r'class="skills-highlight">(.*?)</span>', raw, re.S)
             skills_note = text(note.group(1)) if note else ""
-            for part in re.split(r"\s*•\s*|\s{2,}", unescape(re.sub(r"<[^>]+>", "", raw.split("|")[0]))):
-                name = part.strip()
-                if name and not any(s.name == name for s in skills):
-                    skills.append(Skill(name=name))
+            plain = unescape(re.sub(r"<[^>]+>", "", re.sub(r'<span class="skills-highlight">.*?</span>', "", raw, flags=re.S)))
+            for segment in plain.split("|"):
+                segment = segment.strip()
+                category, sep, items = segment.partition(":")
+                if not sep or len(category) > 40:
+                    # no "Category:" prefix: a plain list (first segment) or the closing note
+                    if "•" in segment or "," in segment:
+                        category, items = "", segment
+                    else:
+                        if not skills_note and segment:
+                            skills_note = " ".join(segment.split())
+                        continue
+                for part in re.split(r"\s*[•,]\s*|\s{2,}", items):
+                    name = " ".join(part.split())
+                    if name and not any(s.name == name for s in skills):
+                        skills.append(Skill(name=name, category=category.strip()))
 
         projects: list[Project] = []
         plist = re.search(r'class="projects-list">(.*?)</ul>', doc, re.S)
@@ -371,7 +383,7 @@ def completeness(p: Profile) -> list[ChecklistItem]:
         ChecklistItem(label="Contact details", done=bool(p.personal.email and p.personal.location), hint="Email and city, at least."),
         ChecklistItem(label="Education with dates", done=bool(p.education) and all(e.period for e in p.education), hint="Each entry needs a period."),
         ChecklistItem(label="At least one project or job", done=bool(p.projects or p.experience), hint="This is what the CV is built from."),
-        ChecklistItem(label="Skills with evidence", done=len([s for s in p.skills if s.evidence]) >= 5, hint="Five or more skills, each with where you used it: the no-invention check relies on this."),
+        ChecklistItem(label="Skills (8 or more)", done=len(p.skills) >= 8, hint="Group them by category; the tailoring picks the right groups per job."),
         ChecklistItem(label="Languages", done=bool(p.languages), hint="English level, plus anything else."),
         ChecklistItem(label="Search settings", done=bool(p.search.keywords and p.search.locations), hint="Keywords and locations drive the feed."),
         ChecklistItem(label="Profile verified", done=p.verified, hint="Read it through once, then mark it verified. Packs refuse to run before that."),
