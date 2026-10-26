@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jobgent — internships in the Netherlands, applications written for you</title>
+<meta name="description" content="Jobgent reads 71 Dutch company job boards and LinkedIn every day, scores each internship against your CV, and writes the tailored CV and cover letter. You press send. Open source and free.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <a class="wordmark" href="#">Jobgent</a>
+  <nav>
+    <a href="#how">How it works</a>
+    <a href="#honest">Why it's safe</a>
+    <a href="#install">Install</a>
+    <a class="gh" href="https://github.com/Oxde/jobgent">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="pitch">
+      <p class="live"><span class="dot"></span><span id="count">158</span> internships in the Netherlands, right now</p>
+      <h1>Stop hunting for internships.<br>Start sending applications.</h1>
+      <p class="lede">Jobgent reads <span id="companies">71</span> company job boards and LinkedIn every morning, keeps the internships you can actually do in English, scores each one against your CV, and writes the tailored CV and cover letter. You read it and press send.</p>
+      <div class="cta">
+        <a class="btn primary" href="#install">Run it on your Mac</a>
+        <a class="btn" href="#hosted">Join the hosted version</a>
+      </div>
+      <p class="fine">Open source, MIT, free. Built by a student in the Netherlands who needs an internship for February 2027 too.</p>
+    </div>
+
+    <div class="board" aria-label="Live internship feed">
+      <div class="board-head">
+        <span>Internships found today</span>
+        <span id="updated">26 Oct 2026</span>
+      </div>
+      <ol id="feed" class="feed"></ol>
+      <div class="board-foot">From the companies' own job boards. No login, no scraping of your account.</div>
+    </div>
+  </section>
+
+  <section id="how" class="how">
+    <h2>What happens, in order</h2>
+    <ol class="steps">
+      <li>
+        <h3>Your facts, once</h3>
+        <p>Upload your CV and answer a few questions, typed or as a voice note. Jobgent turns it into one profile file you can read and edit. That file is the only thing it is ever allowed to say about you.</p>
+      </li>
+      <li>
+        <h3>A feed that is already filtered</h3>
+        <p>Every morning it pulls new postings, drops the ones that demand Dutch, keeps real internships, and scores the rest from 0 to 100 with reasons and gaps. You open it and the good ones are at the top.</p>
+      </li>
+      <li>
+        <h3>An application you approve</h3>
+        <p>One click per job: a one-page A4 CV in your own layout, reordered for this role, plus a short cover letter in your voice. It shows what it changed. You check it, then apply on the company's site or by email.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="honest" class="honest">
+    <div class="honest-text">
+      <h2>It never invents experience</h2>
+      <p>Most AI CV tools will happily add Kubernetes to your skills because the posting asked for it. That gets you an interview you cannot survive.</p>
+      <p>Jobgent can only select, reorder and rephrase what is in your profile. A second pass checks every claim in the finished CV and letter against your facts. If one is not backed, the application fails with the claim named, instead of being sent.</p>
+    </div>
+    <figure class="diff">
+      <figcaption>What changed for “Software Engineering Intern, Databricks”</figcaption>
+      <ul>
+        <li class="ok">Moved the trading-bot project above coursework: it covers Python, asyncio and Docker, all in the posting.</li>
+        <li class="ok">Rewrote the summary around distributed data work; dropped the mobile app line.</li>
+        <li class="ok">Skills line now leads with Python, SQL, Spark-adjacent tools you actually used.</li>
+        <li class="bad">Rejected draft: “experience with Kubernetes in production” is not in your profile.</li>
+      </ul>
+    </figure>
+  </section>
+
+  <section id="install" class="install">
+    <div>
+      <h2>Run it yourself</h2>
+      <p>It is a Python tool with an MCP server, so you can drive it from Claude, Cursor or any agent: “fetch jobs, show me the top ten, make the pack for number three.” There is also a small web app for the feed and your tracker.</p>
+      <pre><code>git clone https://github.com/Oxde/jobgent
+cd jobgent &amp;&amp; uv sync &amp;&amp; uv run playwright install chromium
+claude mcp add jobgent -- uv --directory $PWD run jobgent mcp</code></pre>
+      <p class="fine">You need an Anthropic API key (cents per application). A LinkedIn feed is optional and costs cents a day through Apify.</p>
+    </div>
+    <div id="hosted" class="hosted">
+      <h2>Or let us run it</h2>
+      <p>A hosted version is coming for people who do not want to touch a terminal: same tool, your data in the EU, the free tier stays free. Leave your email and you will get the invite when it opens.</p>
+      <form class="waitlist" action="mailto:jobgent@oxde.ai" method="get">
+        <input type="hidden" name="subject" value="Hosted Jobgent: invite me">
+        <input type="email" name="body" placeholder="you@student.nl" aria-label="Your email" required>
+        <button class="btn primary" type="submit">Tell me when it opens</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>Jobgent is open source under the MIT licence.</span>
+  <span><a href="https://github.com/Oxde/jobgent">Source on GitHub</a></span>
+</footer>
+
+<script>
+(async function () {
+  const feed = document.getElementById('feed');
+  let data;
+  try {
+    data = await (await fetch('data.json')).json();
+  } catch (e) {
+    feed.innerHTML = '<li class="row empty">The feed is generated from the live database. Run <code>jobgent landing-data</code>.</li>';
+    return;
+  }
+  document.getElementById('count').textContent = data.count;
+  document.getElementById('companies').textContent = data.boards;
+  document.getElementById('updated').textContent = new Date(data.updated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const frag = document.createDocumentFragment();
+  for (const j of data.jobs) {
+    const li = document.createElement('li');
+    li.className = 'row';
+    const a = document.createElement('a');
+    a.href = j.url || '#';
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.innerHTML = '<span class="co"></span><span class="ti"></span><span class="ci"></span>';
+    a.querySelector('.co').textContent = j.company;
+    a.querySelector('.ti').textContent = j.title;
+    a.querySelector('.ci').textContent = j.city;
+    li.appendChild(a);
+    frag.appendChild(li);
+  }
+  feed.appendChild(frag);
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    feed.querySelectorAll('.row').forEach((r, i) => { r.style.animationDelay = Math.min(i * 28, 900) + 'ms'; r.classList.add('in'); });
+  } else {
+    feed.querySelectorAll('.row').forEach(r => r.classList.add('in'));
+  }
+})();
+</script>
+</body>
+</html>

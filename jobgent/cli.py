@@ -138,6 +138,30 @@ def companies() -> None:
                 typer.echo(f"FAIL  {c.name:25s} {c.ats:10s} {str(e)[:120]}")
 
 
+@app.command("landing-data")
+def landing_data(out: Path = typer.Argument(Path("landing/data.json"))) -> None:
+    """Export the current feed (title, company, city, url) as JSON for the landing page."""
+    import json
+    from datetime import datetime
+
+    from jobgent.ingest import city
+
+    s = build_services()
+    with s.sessionmaker() as session:
+        feed = list_jobs(session, s.store.load().search, 0, None, None, 500)
+    rows = [{"title": j.title, "company": j.company, "city": city(j.location).title(), "url": j.url} for j in feed]
+    payload = {
+        "updated": datetime.now().strftime("%Y-%m-%d"),
+        "count": len(rows),
+        "companies": len({r["company"] for r in rows}),
+        "boards": len(load_companies(s.settings.companies_file)),
+        "jobs": rows,
+    }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(payload, indent=1, ensure_ascii=False))
+    typer.echo(f"{len(rows)} jobs → {out}")
+
+
 @app.command()
 def mcp() -> None:
     """Run the MCP server on stdio."""
