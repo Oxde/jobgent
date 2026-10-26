@@ -1,12 +1,12 @@
 # Jobgent — design (26 Oct 2026)
 
-Working name: **Jobgent** ("stage" = internship in Dutch; stage one of a career). Mark may rename it; nothing in the code should depend on the name beyond the package folder.
+Original working name: StageOne ("stage" = internship in Dutch). Renamed to Jobgent.
 
 ## Intent
 
 The author (a data-science student in the Netherlands, not fluent in Dutch) needs an internship starting Feb 2027 and wants to start applying **this week**. In June 2025 he did the loop by hand: find a posting, paste it into Cursor, have an MCP tool tailor his CV from a saved profile, write a cover letter, apply via LinkedIn / company form / email. ~50 applications.
 
-Jobgent automates that loop end to end **except the final submit**, which stays human. It is built for Mark first; later it becomes an open-source tool with paid hosting for international students in NL (the Piston pattern: ton-piston.com, France, €8.4k MRR after 2.5 months).
+Jobgent automates that loop end to end **except the final submit**, which stays human. It is built for Mark first; later it becomes an open-source tool for international students in NL.
 
 ## Goals (day one)
 

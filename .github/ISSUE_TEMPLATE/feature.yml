@@ -1,0 +1,15 @@
+name: Idea or feature
+description: Something Jobgent should do.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: moment
+    attributes:
+      label: The moment
+      description: When in your job search did you wish Jobgent did this?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What it would do

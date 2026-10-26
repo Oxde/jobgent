@@ -1,10 +1,19 @@
 [project]
 name = "jobgent"
 version = "0.1.0"
-description = "Internship copilot: find, match, tailor, track. MCP-first."
+description = "Open-source AI job search engine: find jobs, judge fit, write a tailored CV and letter, track applications. MCP-first."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12,<3.13"
+authors = [{ name = "Oxde" }]
+keywords = ["job-search", "internship", "ai-agent", "mcp", "cv", "resume", "cover-letter", "claude", "ats"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+]
 dependencies = [
     "anthropic==0.49.0",
     "fastmcp==2.3.4",
@@ -20,6 +29,10 @@ dependencies = [
     "python-multipart==0.0.20",
     "pypdf==5.4.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Oxde/jobgent"
+Issues = "https://github.com/Oxde/jobgent/issues"
 
 [project.scripts]
 jobgent = "jobgent.cli:app"

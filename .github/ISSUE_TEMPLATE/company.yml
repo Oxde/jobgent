@@ -1,0 +1,19 @@
+name: Add a company or job source
+description: A company whose jobs Jobgent misses, or a job board to support.
+labels: [sources, good first issue]
+body:
+  - type: input
+    id: company
+    attributes:
+      label: Company or source
+    validations:
+      required: true
+  - type: input
+    id: careers
+    attributes:
+      label: Careers page URL
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: If the careers page is on Greenhouse, Lever, Recruitee, Ashby, Workable or Homerun, you can add it yourself in one line. See CONTRIBUTING.md.

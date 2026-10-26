@@ -1,0 +1,24 @@
+name: Bug report
+description: Something doesn't work as described.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead. Paste the full error message.
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: Web app, CLI command, or MCP tool (and which agent, e.g. Claude Code).
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `git rev-parse --short HEAD`, and your OS.
+  - type: markdown
+    attributes:
+      value: Please remove personal details (your CV, email, phone) and API keys from anything you paste.

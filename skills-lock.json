@@ -1,23 +1,11 @@
 {
   "version": 1,
   "skills": {
-    "academic-cv-builder": {
-      "source": "Paramchoudhary/ResumeSkills",
-      "sourceType": "github",
-      "skillPath": "skills/academic-cv-builder/SKILL.md",
-      "computedHash": "10dfddb1d7d01fdbec8e965841c1de42b193e5af67d2570f24d3469ece4ded3b"
-    },
     "application-form-filler": {
       "source": "Paramchoudhary/ResumeSkills",
       "sourceType": "github",
       "skillPath": "skills/application-form-filler/SKILL.md",
       "computedHash": "65d16042daefd3c84b6ea02a7a689e6889289902af5b6b3cd1a5d120d78911a5"
-    },
-    "career-changer-translator": {
-      "source": "Paramchoudhary/ResumeSkills",
-      "sourceType": "github",
-      "skillPath": "skills/career-changer-translator/SKILL.md",
-      "computedHash": "3ee269bf946090ef6c88fd516e1e0d76a5f47ff4379a9163bb409d7210f6753f"
     },
     "cold-email-writer": {
       "source": "Paramchoudhary/ResumeSkills",
@@ -30,18 +18,6 @@
       "sourceType": "github",
       "skillPath": "skills/cover-letter-generator/SKILL.md",
       "computedHash": "be8edf0952716e813a721f6d097cc8ae4d3562fac0a413138ca993cce8c4b5db"
-    },
-    "creative-portfolio-resume": {
-      "source": "Paramchoudhary/ResumeSkills",
-      "sourceType": "github",
-      "skillPath": "skills/creative-portfolio-resume/SKILL.md",
-      "computedHash": "a606d15d5a5af4bbbbb8f06433a3b4d16d6e88f23fc3f755eeee201cd35c94e1"
-    },
-    "executive-resume-writer": {
-      "source": "Paramchoudhary/ResumeSkills",
-      "sourceType": "github",
-      "skillPath": "skills/executive-resume-writer/SKILL.md",
-      "computedHash": "4c8c519df4a69f2078ef14c354707754de4e28a73ddb5eb1032c88f2fd2201fe"
     },
     "frontend-design": {
       "source": "anthropics/skills",
@@ -67,23 +43,11 @@
       "skillPath": "skills/linkedin-profile-optimizer/SKILL.md",
       "computedHash": "2d49d4fb126ddfdc630542e0844e87822abb8960030788de7cafa5deae7d736c"
     },
-    "offer-comparison-analyzer": {
-      "source": "Paramchoudhary/ResumeSkills",
-      "sourceType": "github",
-      "skillPath": "skills/offer-comparison-analyzer/SKILL.md",
-      "computedHash": "f80c939fe91f3a702a3b548b580c780cc204fa91281195fea800dd64246b4205"
-    },
     "portfolio-case-study-writer": {
       "source": "Paramchoudhary/ResumeSkills",
       "sourceType": "github",
       "skillPath": "skills/portfolio-case-study-writer/SKILL.md",
       "computedHash": "06712b3c7b6699797d15009ae31eca1e5b582290695f759a25a0bd9759312375"
-    },
-    "reference-list-builder": {
-      "source": "Paramchoudhary/ResumeSkills",
-      "sourceType": "github",
-      "skillPath": "skills/reference-list-builder/SKILL.md",
-      "computedHash": "a8cf62ebbbbc899caec7a64f9721c4eecece38a7981fa72929a8378f3ec6ad0f"
     },
     "resume-ats-optimizer": {
       "source": "Paramchoudhary/ResumeSkills",
@@ -103,12 +67,6 @@
       "skillPath": "skills/resume-formatter/SKILL.md",
       "computedHash": "788284eb2f841efd6b59ee984924db4e67794ab842818f04870eb86ee61306c1"
     },
-    "resume-quantifier": {
-      "source": "Paramchoudhary/ResumeSkills",
-      "sourceType": "github",
-      "skillPath": "skills/resume-quantifier/SKILL.md",
-      "computedHash": "d251f6c2f23684fe5bd270397a4cdb33e71575686dd3e44036536ddba645ad2c"
-    },
     "resume-section-builder": {
       "source": "Paramchoudhary/ResumeSkills",
       "sourceType": "github",
@@ -126,12 +84,6 @@
       "sourceType": "github",
       "skillPath": "skills/resume-version-manager/SKILL.md",
       "computedHash": "172c04ab07ba5e23a0136839f31dc36b6223877b60e2d438189ff95d816792f4"
-    },
-    "salary-negotiation-prep": {
-      "source": "Paramchoudhary/ResumeSkills",
-      "sourceType": "github",
-      "skillPath": "skills/salary-negotiation-prep/SKILL.md",
-      "computedHash": "f6b35719a68e88861f335871df923aa4239a4ef1f868fb88e011e189a0871203"
     },
     "tech-resume-optimizer": {
       "source": "Paramchoudhary/ResumeSkills",
