@@ -38,9 +38,18 @@ def template_file(template_id: str) -> Path:
     return path
 
 
+EDITABLE_TEMPLATES = {DEFAULT_TEMPLATE_ID, "times"}
+
+
 def render_cv_html(
-    profile: Profile, cv: TailoredCV, template_path: Path | None, template_id: str = DEFAULT_TEMPLATE_ID
+    profile: Profile,
+    cv: TailoredCV,
+    template_path: Path | None,
+    template_id: str = DEFAULT_TEMPLATE_ID,
+    editable: bool = False,
 ) -> str:
+    """`editable` marks every field with its profile path (data-path) so the preview can be edited in place.
+    Only meaningful for the untailored CV, where list positions equal profile positions."""
     path = template_path or template_file(template_id)
     env = Environment(loader=FileSystemLoader(str(path.parent)), autoescape=select_autoescape(["html"]))
     template = env.get_template(path.name)
@@ -50,4 +59,5 @@ def render_cv_html(
         cv=cv,
         languages=profile.languages,
         certifications=[],
+        editable=editable,
     )

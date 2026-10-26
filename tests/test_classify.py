@@ -107,3 +107,11 @@ def test_classify_commits_per_batch(tmp_path):
     with Session() as s:
         done = [j.title for j in s.scalars(select(Job).where(Job.classified_at.is_not(None)))]
         assert done == ["A Intern"]
+
+
+def test_guess_language():
+    from jobgent.classify import guess_language
+
+    assert guess_language("Wij zoeken een stagiair voor ons team. Je werkt mee aan de ontwikkeling van onze producten en je bent leergierig.") == "nl"
+    assert guess_language("We are looking for an intern to join our team. You will work on data pipelines and you are curious.") == "en"
+    assert guess_language("") == "other"

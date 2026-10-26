@@ -180,6 +180,11 @@ class ProfileStore:
         with self.notes_path.open("a") as f:
             f.write(f"\n## {stamp}\n\n{text.strip()}\n")
 
+    def version(self) -> str:
+        """Changes whenever profile.yaml or voice.md changes, by any writer (web, MCP, CLI, hand edit)."""
+        stamps = [str(f.stat().st_mtime_ns) for f in (self.profile_path, self.voice_path) if f.is_file()]
+        return "-".join(stamps) or "0"
+
     def master_cv_path(self) -> Path | None:
         return self.cv_path if self.cv_path.is_file() else None
 
@@ -259,3 +264,23 @@ def completeness(p: Profile) -> list[ChecklistItem]:
         ChecklistItem(label="Search settings", done=bool(p.search.keywords and p.search.locations), hint="Keywords and locations drive the feed."),
         ChecklistItem(label="Profile verified", done=p.verified, hint="Read it through once, then mark it verified. Packs refuse to run before that."),
     ]
+
+
+def outline(profile: Profile) -> str:
+    """Every editable fact as `path: value`, the paths profile_update accepts."""
+    lines: list[str] = []
+
+    def walk(node: object, path: str) -> None:
+        if isinstance(node, dict):
+            for k, v in node.items():
+                walk(v, f"{path}.{k}" if path else str(k))
+        elif isinstance(node, list) and node and all(not isinstance(x, (dict, list)) for x in node) and path.endswith(("keywords", "locations", "languages", "internship_types", "tech")):
+            lines.append(f"{path}: [{', '.join(str(x) for x in node)}]")
+        elif isinstance(node, list):
+            for i, v in enumerate(node):
+                walk(v, f"{path}[{i}]")
+        else:
+            lines.append(f"{path}: {node}")
+
+    walk(profile.model_dump(mode="json"), "")
+    return "\n".join(lines)

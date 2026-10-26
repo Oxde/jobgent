@@ -45,3 +45,21 @@ def test_jobs_list_sorted_by_score_and_profile_update(services):
     assert [j["title"] for j in listed] == ["Data Intern", "AI Intern"]
     assert parse(prof[0])["preferences"]["weekly_goal"] == 12
     assert parse(stats[0])["goal"] == 12
+
+
+def test_cv_editing_tools(services):
+    mcp = build_mcp(services)
+
+    async def go():
+        async with Client(mcp) as c:
+            names = {t.name for t in await c.list_tools()}
+            added = await c.call_tool("profile_add_item", {"section": "skills", "item": {"name": "SQL", "evidence": "course"}})
+            outline = await c.call_tool("cv_outline", {})
+            removed = await c.call_tool("profile_remove_item", {"section": "skills", "index": 0})
+            return names, added, outline, removed
+
+    names, added, outline, removed = run(go())
+    assert {"profile_add_item", "profile_remove_item", "cv_outline", "cv_export_pdf"} <= names
+    assert parse(added[0])["skills"][0]["name"] == "SQL"
+    assert "skills[0].name: SQL" in outline[0].text and "personal.name: T" in outline[0].text
+    assert parse(removed[0])["skills"] == []

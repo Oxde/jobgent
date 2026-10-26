@@ -66,4 +66,5 @@ export const api = {
   assistantSend: (message: string) => request<ChatResponse>("/assistant", json({ message })),
   assistantClear: () => request<ChatMessage[]>("/assistant", { method: "DELETE" }),
   settings: () => request<SettingsPage>("/settings"),
+  profileVersion: () => request<{ version: string }>("/profile/version"),
 };

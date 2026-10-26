@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from jobgent.classify import feed_filter
+from jobgent.classify import guess_language, in_region, prefilter
 from jobgent.db import Application, Job, Match, Status
 from jobgent.errors import JobgentError
 from jobgent.profile.models import SearchProfile
@@ -79,6 +79,11 @@ def get_job(session: Session, job_id: int) -> Job:
     return job
 
 
+def _rule_match(job: Job, search: SearchProfile) -> bool:
+    """Feed rule for jobs no model has classified yet (no API key): title + region + language guess."""
+    return prefilter(job.title) and in_region(job.location) and guess_language(job.description) in search.languages
+
+
 def list_jobs(
     session: Session,
     search: SearchProfile,
@@ -87,17 +92,34 @@ def list_jobs(
     source: str | None = None,
     limit: int = 30,
 ) -> list[JobSummary]:
-    q = feed_filter(select(Job), search).join(Match).where(Match.total >= min_score)
+    """Scored jobs that pass the model's filter, then unscored jobs that pass the rules, newest first."""
+    q = select(Job).outerjoin(Match).outerjoin(Application)
     if source:
         q = q.where(Job.source.like(f"{source}%"))
     if status:
-        q = q.join(Application).where(Application.status == Status(status))
+        if status == Status.new.value:
+            q = q.where((Application.id.is_(None)) | (Application.status == Status.new))
+        else:
+            q = q.where(Application.status == Status(status))
     else:
-        q = q.outerjoin(Application).where(
-            (Application.id.is_(None)) | (Application.status.notin_([Status.skipped, Status.rejected]))
+        q = q.where((Application.id.is_(None)) | (Application.status.notin_([Status.skipped, Status.rejected])))
+    scored: list[Job] = []
+    unscored: list[Job] = []
+    for job in session.scalars(q):
+        passes_model = (
+            job.is_internship is True
+            and job.language in search.languages
+            and job.dutch_required is False
+            and job.in_region is not False
         )
-    q = q.order_by(Match.total.desc(), Job.id.desc()).limit(limit)
-    return [summary(j) for j in session.scalars(q)]
+        if job.match is not None:
+            if passes_model and job.match.total >= min_score:
+                scored.append(job)
+        elif min_score == 0 and (passes_model if job.classified_at is not None else _rule_match(job, search)):
+            unscored.append(job)
+    scored.sort(key=lambda j: (-(j.match.total if j.match else 0), -j.id))
+    unscored.sort(key=lambda j: (j.posted_at or j.fetched_at), reverse=True)
+    return [summary(j) for j in (scored + unscored)[:limit]]
 
 
 def list_applications(session: Session, status: str | None = None) -> list[JobSummary]:

@@ -42,6 +42,8 @@ Then talk to it:
 5. "I applied to 42 by email." → `application_set_status`
 6. "How am I doing this week?" → `stats`
 
+Edit your CV by talking to Claude: "show me my CV outline" → `cv_outline`, "rewrite bullet 2 of my first job" → `profile_update experience[0].bullets[1]`, "add SQL to my skills" → `profile_add_item`, "export my CV" → `cv_export_pdf`. The web app's Me page updates live while Claude edits. ChatGPT and other remote clients: `uv run jobgent mcp --http` (port 8790) and add it as a connector.
+
 Found a posting the search missed (e.g. on LinkedIn)? "Add this job: <url or pasted text>" → `job_add`.
 
 ## CLI

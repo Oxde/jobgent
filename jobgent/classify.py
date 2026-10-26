@@ -36,6 +36,20 @@ def prefilter(title: str) -> bool:
     return _INTERN_WORDS.search(title) is not None
 
 
+_NL_WORDS = {"de", "het", "een", "en", "je", "jij", "wij", "we", "ons", "onze", "voor", "met", "van", "bij", "zijn", "werk", "wat", "naar", "ook", "niet", "als", "jouw"}
+_EN_WORDS = {"the", "and", "you", "we", "our", "for", "with", "of", "to", "are", "will", "your", "is", "in", "on", "as", "be"}
+
+
+def guess_language(text: str) -> Literal["en", "nl", "other"]:
+    """Cheap stop-word vote, used only when no model has classified the posting yet."""
+    words = re.findall(r"[a-zà-ÿ]+", text.lower())[:400]
+    nl = sum(w in _NL_WORDS for w in words)
+    en = sum(w in _EN_WORDS for w in words)
+    if nl + en < 3:
+        return "other"
+    return "nl" if nl > en else "en"
+
+
 def in_region(location: str | None) -> bool:
     """Unknown location passes; otherwise it must look like NL / remote / Europe-wide."""
     if not location:

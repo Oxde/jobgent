@@ -123,3 +123,32 @@ def test_spa_fallback_serves_index_when_built(services, tmp_path, monkeypatch):
     assert c.get("/jobs/42").text == "<html><body>app</body></html>"
     assert c.get("/assets/x.js").text == "1"
     assert c.get("/api/nope").status_code == 404
+
+
+def test_editable_preview_and_profile_version(services):
+    import time
+
+    c = client(services)
+    services.store.append("experience", {"company": "Acme", "title": "Dev", "period": "2024", "bullets": ["a"]})
+    html = c.get("/api/cv/preview?template=default&edit=1").text
+    assert 'data-path="experience[0].bullets[0]"' in html and "contenteditable" in html
+    assert "contenteditable" not in c.get("/api/cv/preview?template=default").text
+    v1 = c.get("/api/profile/version").json()["version"]
+    time.sleep(0.01)
+    assert c.patch("/api/profile", json={"path": "experience[0].bullets[0]", "value": "Built it"}).status_code == 200
+    assert services.store.load().experience[0].bullets[0] == "Built it"
+    assert c.get("/api/profile/version").json()["version"] != v1
+
+
+def test_cv_pdf_download(services, monkeypatch):
+    import jobgent.web.app as webapp
+
+    def fake_pdf(html: str, out):
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_bytes(b"%PDF-1.4 fake")
+        return 1
+
+    monkeypatch.setattr(webapp, "html_to_pdf", fake_pdf)
+    r = client(services).get("/api/cv/pdf?template=times")
+    assert r.status_code == 200 and r.headers["content-type"] == "application/pdf" and r.content.startswith(b"%PDF")
+    assert client(services).get("/api/cv/pdf?template=nope").status_code == 400

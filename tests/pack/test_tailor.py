@@ -78,3 +78,16 @@ def test_all_templates_render_profile():
         assert "Test Student" in html and "Built a bot" in html and "size: A4" in html, tid
     with _pt.raises(KeyError, match="nope"):
         render_cv_html(profile(), tailored(), template_path=None, template_id="nope")
+
+
+def test_editable_render_marks_profile_paths():
+    from jobgent.pack.render import render_cv_html
+
+    for tid in ("default", "times"):
+        html = render_cv_html(profile(), tailored(), template_path=None, template_id=tid, editable=True)
+        assert 'data-path="personal.name"' in html, tid
+        assert 'data-path="summary"' in html, tid
+        assert 'data-path="experience[0].bullets[0]"' in html, tid
+        assert 'data-path="education[0].degree"' in html, tid
+        plain = render_cv_html(profile(), tailored(), template_path=None, template_id=tid)
+        assert "data-path" not in plain, tid

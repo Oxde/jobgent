@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% macro dp(p) %}{% if editable %} data-path="{{ p }}"{% endif %}{% endmacro %}
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -7,7 +8,8 @@
 @page { size: A4; margin: 12mm; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { font-family: 'Times New Roman', Times, serif; font-size: 11.5pt; line-height: 1.25; color: #000; background: #fff; max-width: 210mm; margin: 0 auto; padding: 0.3in; }
+body { font-family: 'Times New Roman', Times, serif; font-size: 11.5pt; line-height: 1.25; color: #000; background: #fff; margin: 0; }
+@media screen { body { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 12mm; box-sizing: border-box; } }
 .header { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 10pt; align-items: end; margin-bottom: 0.14in; }
 .name { font-size: 20pt; font-weight: bold; color: #2E7D32; line-height: 1; margin-bottom: 3pt; }
 .professional-title { font-size: 11.5pt; font-weight: bold; }
@@ -33,13 +35,13 @@ body { font-family: 'Times New Roman', Times, serif; font-size: 11.5pt; line-hei
 <body>
 <div class="header">
   <div>
-    <div class="name">{{ personal.name }}</div>
-    {% if headline %}<div class="professional-title">{{ headline }}</div>{% endif %}
+    <div class="name"{{ dp('personal.name') }}>{{ personal.name }}</div>
+    {% if headline or editable %}<div class="professional-title"{{ dp('personal.headline') }}>{{ headline }}</div>{% endif %}
   </div>
   <div class="contact-info">
-    {% if personal.location %}<div>{{ personal.location }}</div>{% endif %}
-    {% if personal.email %}<div>{{ personal.email }}</div>{% endif %}
-    {% if personal.phone %}<div>{{ personal.phone }}</div>{% endif %}
+    {% if personal.location %}<div{{ dp('personal.location') }}>{{ personal.location }}</div>{% endif %}
+    {% if personal.email %}<div{{ dp('personal.email') }}>{{ personal.email }}</div>{% endif %}
+    {% if personal.phone %}<div{{ dp('personal.phone') }}>{{ personal.phone }}</div>{% endif %}
   </div>
   <div class="contact-info">
     {% if personal.linkedin %}<div><a href="https://{{ personal.linkedin | replace('https://', '') }}">{{ personal.linkedin | replace('https://', '') | replace('www.', '') }}</a></div>{% endif %}
@@ -47,26 +49,26 @@ body { font-family: 'Times New Roman', Times, serif; font-size: 11.5pt; line-hei
   </div>
 </div>
 
-{% if cv.summary %}<div class="objective">{{ cv.summary }}</div>{% endif %}
+{% if cv.summary or editable %}<div class="objective"{{ dp('summary') }}>{{ cv.summary }}</div>{% endif %}
 
 {% if cv.experience %}
 <div class="section-title">Work experience</div>
-{% for job in cv.experience %}
+{% for job in cv.experience %}{% set i = loop.index0 %}
 <div class="job">
   <div class="job-header">
-    <div class="job-title">{% if job.company %}{{ job.company }} | {% endif %}{{ job.title }}</div>
-    <div class="job-date">{{ job.period }}</div>
+    <div class="job-title">{% if job.company %}<span{{ dp('experience[%d].company' % i) }}>{{ job.company }}</span> | {% endif %}<span{{ dp('experience[%d].title' % i) }}>{{ job.title }}</span></div>
+    <div class="job-date"{{ dp('experience[%d].period' % i) }}>{{ job.period }}</div>
   </div>
-  {% if job.bullets %}<ul class="bullets">{% for b in job.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+  {% if job.bullets %}<ul class="bullets">{% for b in job.bullets %}<li{{ dp('experience[%d].bullets[%d]' % (i, loop.index0)) }}>{{ b }}</li>{% endfor %}</ul>{% endif %}
 </div>
 {% endfor %}
 {% endif %}
 
 {% if cv.education %}
 <div class="section-title">Education</div>
-{% for e in cv.education %}
+{% for e in cv.education %}{% set i = loop.index0 %}
 <div class="education-item">
-  <div class="degree-header"><span>{{ e.degree }}, {{ e.institution }}</span><span class="degree-date">{{ e.period }}</span></div>
+  <div class="degree-header"><span><span{{ dp('education[%d].degree' % i) }}>{{ e.degree }}</span>, <span{{ dp('education[%d].institution' % i) }}>{{ e.institution }}</span></span><span class="degree-date"{{ dp('education[%d].period' % i) }}>{{ e.period }}</span></div>
   {% if e.gpa or e.details %}<div>{% if e.gpa %}GPA: {{ e.gpa }}{% endif %}{% if e.gpa and e.details %}. {% endif %}{{ e.details }}</div>{% endif %}
 </div>
 {% endfor %}
@@ -74,14 +76,14 @@ body { font-family: 'Times New Roman', Times, serif; font-size: 11.5pt; line-hei
 
 {% if cv.skills %}
 <div class="section-title">Skills</div>
-<div class="skills">{{ cv.skills | join(', ') }}{% if languages %}. <i>Languages:</i> {% for l in languages %}{{ l.name }}{% if l.level %} ({{ l.level }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</div>
+<div class="skills">{% for s in cv.skills %}<span{{ dp('skills[%d].name' % loop.index0) }}>{{ s }}</span>{% if not loop.last %}, {% endif %}{% endfor %}{% if languages %}. <i>Languages:</i> {% for l in languages %}{{ l.name }}{% if l.level %} ({{ l.level }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</div>
 {% endif %}
 
 {% if cv.projects %}
 <div class="section-title">Projects</div>
 <ul class="bullets projects">
-{% for p in cv.projects %}
-  <li><span class="project-title">{{ p.name }}</span>{% if p.description %}: {{ p.description }}{% endif %}{% if p.tech %} <i>({{ p.tech | join(', ') }})</i>{% endif %}{% if p.link %} <a href="{{ p.link }}">{{ p.link | replace('https://', '') }}</a>{% endif %}</li>
+{% for p in cv.projects %}{% set i = loop.index0 %}
+  <li><span class="project-title"{{ dp('projects[%d].name' % i) }}>{{ p.name }}</span>{% if p.description %}: <span{{ dp('projects[%d].description' % i) }}>{{ p.description }}</span>{% endif %}{% if p.tech %} <i>({{ p.tech | join(', ') }})</i>{% endif %}{% if p.link %} <a href="{{ p.link }}">{{ p.link | replace('https://', '') }}</a>{% endif %}</li>
 {% endfor %}
 </ul>
 {% endif %}

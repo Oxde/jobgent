@@ -24,11 +24,13 @@ body { @apply bg-bg text-text font-sans text-[14px] leading-normal antialiased; 
 h1, h2, h3 { @apply font-display tracking-tight; }
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 3px; }
 
-.btn { @apply inline-flex items-center gap-2 rounded-lg border border-line-2 bg-bg-3 px-3 py-2 text-[13.5px] font-semibold text-text hover:border-text-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[38px]; }
-.btn-primary { @apply border-text bg-text text-bg hover:bg-white; }
-.btn-quiet { @apply border-transparent bg-transparent text-text-2 font-medium hover:bg-bg-3 hover:text-text; }
-.btn-sm { @apply px-2.5 py-1.5 text-[12.5px] min-h-[32px]; }
-.input { @apply w-full rounded-lg border border-line-2 bg-bg-3 px-3 py-2 text-[13.5px] text-text placeholder:text-text-3 focus:border-text-2 focus:outline-none min-h-[38px]; }
-.panel { @apply rounded-xl border border-line bg-bg-2 p-4; }
-.label { @apply block text-[12px] text-text-3 mb-1; }
-.tag { @apply inline-block rounded-md bg-bg-3 px-2 py-0.5 text-[11.5px] text-text-2 capitalize; }
+@layer components {
+  .btn { @apply inline-flex items-center gap-2 rounded-lg border border-line-2 bg-bg-3 px-3 py-2 text-[13.5px] font-semibold text-text hover:border-text-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer min-h-[38px]; }
+  .btn-primary { @apply border-text bg-text text-bg hover:bg-white; }
+  .btn-quiet { @apply border-transparent bg-transparent text-text-2 font-medium hover:bg-bg-3 hover:text-text; }
+  .btn-sm { @apply px-2.5 py-1.5 text-[12.5px] min-h-[32px]; }
+  .input { @apply w-full rounded-lg border border-line-2 bg-bg-3 px-3 py-2 text-[13.5px] text-text placeholder:text-text-3 focus:border-text-2 focus:outline-none min-h-[38px]; }
+  .panel { @apply rounded-xl border border-line bg-bg-2 p-4; }
+  .label { @apply block text-[12px] text-text-3 mb-1; }
+  .tag { @apply inline-block rounded-md bg-bg-3 px-2 py-0.5 text-[11.5px] text-text-2 capitalize; }
+}

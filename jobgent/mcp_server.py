@@ -16,7 +16,11 @@ from jobgent.classify import classify_jobs
 from jobgent.db import Status
 from jobgent.fetch import FetchSummary, fetch_all
 from jobgent.pack.create import PackResult, create_pack, load_pack
+from jobgent.pack.pdf import html_to_pdf
+from jobgent.pack.render import render_cv_html
+from jobgent.pack.tailor import general_cv
 from jobgent.profile.models import Profile
+from jobgent.profile.store import outline
 from jobgent.score import score_job
 from jobgent.service import Services, build_services
 from jobgent.sources.manual import add_job_from_text, add_job_from_url
@@ -77,6 +81,39 @@ def build_mcp(services: Services) -> FastMCP:
         """Change one field by dotted path, e.g. 'preferences.weekly_goal' = '12', 'search.keywords' = '[data intern, AI intern]',
         'education[0].period' = '2023 – 2027'. Text fields are stored as given; numbers, lists and booleans are parsed from YAML."""
         return services.store.update(path, value)
+
+    @mcp.tool()
+    @surface_errors
+    def profile_add_item(section: str, item: dict[str, object]) -> Profile:
+        """Append one entry to a list section: experience {company, title, period, bullets[]}, education {institution,
+        degree, period, gpa, details}, projects {name, description, tech[], link}, skills {name, evidence},
+        languages {name, level}. Only add facts the user told you."""
+        return services.store.append(section, item)
+
+    @mcp.tool()
+    @surface_errors
+    def profile_remove_item(section: str, index: int) -> Profile:
+        """Remove entry `index` (0-based) from a list section. Check cv_outline for indexes first."""
+        return services.store.remove(section, index)
+
+    @mcp.tool()
+    @surface_errors
+    def cv_outline() -> str:
+        """The whole CV/profile as `path: value` lines. Use the paths with profile_update to change any line,
+        e.g. `experience[0].bullets[1]`. The web app at /me shows the result live."""
+        return outline(services.store.load())
+
+    @mcp.tool()
+    @in_thread
+    def cv_export_pdf(template: str | None = None) -> str:
+        """Render the general (untailored) CV to an A4 PDF and return its path. Template ids: see profile_get preferences
+        or the web app; default is the user's chosen one."""
+        profile = services.store.load()
+        tid = template or profile.preferences.template
+        html = render_cv_html(profile, general_cv(profile), services.store.master_cv_path(), tid)
+        out = services.settings.home / "cv" / f"cv-{tid}.pdf"
+        pages = html_to_pdf(html, out)
+        return f"{out} ({pages} page{'s' if pages != 1 else ''})"
 
     @mcp.tool()
     @surface_errors

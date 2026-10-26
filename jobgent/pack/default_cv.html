@@ -1,4 +1,5 @@
 <!doctype html>
+{% macro dp(p) %}{% if editable %} data-path="{{ p }}"{% endif %}{% endmacro %}
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -6,74 +7,72 @@
 <style>
   @page { size: A4; margin: 14mm; }
   html, body { margin: 0; padding: 0; }
-  @media screen { body { max-width: 210mm; margin: 0 auto; padding: 14mm; } }
-  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10.5pt; line-height: 1.35; color: #111; }
+  @media screen { body { width: 210mm; min-height: 297mm; margin: 0 auto; padding: 14mm; box-sizing: border-box; } }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10.5pt; line-height: 1.35; color: #111; background: #fff; }
   h1 { font-size: 20pt; margin: 0 0 2pt; letter-spacing: -0.02em; }
+  .headline { font-size: 11pt; color: #333; margin-bottom: 4pt; }
   .contact { font-size: 9pt; color: #444; margin-bottom: 8pt; }
   .contact span + span::before { content: " · "; }
   h2 { font-size: 10pt; text-transform: uppercase; letter-spacing: 0.08em; margin: 10pt 0 4pt; padding-bottom: 2pt; border-bottom: 1px solid #ccc; }
   .item { margin-bottom: 5pt; }
   .head { display: flex; justify-content: space-between; gap: 8pt; }
   .head > span { min-width: 0; overflow-wrap: anywhere; }
-  .head .when { flex: none; }
-  .head b { font-weight: 600; }
-  .head .when { color: #555; font-size: 9pt; }
+  .head .when { color: #555; font-size: 9pt; flex: none; }
   ul { margin: 2pt 0 0; padding-left: 14pt; }
   li { margin: 0 0 1pt; }
   p { margin: 0; }
   .skills { line-height: 1.5; }
+  .skills span + span::before { content: " · "; }
 </style>
 </head>
 <body>
-  <h1>{{ personal.name }}</h1>
+  <h1{{ dp('personal.name') }}>{{ personal.name }}</h1>
+  {% if headline or editable %}<div class="headline"{{ dp('personal.headline') }}>{{ headline }}</div>{% endif %}
   <div class="contact">
-    {% if personal.location %}<span>{{ personal.location }}</span>{% endif %}
-    {% if personal.email %}<span>{{ personal.email }}</span>{% endif %}
-    {% if personal.phone %}<span>{{ personal.phone }}</span>{% endif %}
-    {% if personal.linkedin %}<span>{{ personal.linkedin }}</span>{% endif %}
-    {% if personal.github %}<span>{{ personal.github }}</span>{% endif %}
+    {% for key in ['location', 'email', 'phone', 'linkedin', 'github'] %}{% if personal[key] %}<span{{ dp('personal.' ~ key) }}>{{ personal[key] }}</span>{% endif %}{% endfor %}
   </div>
 
-  <p>{{ cv.summary }}</p>
+  {% if cv.summary or editable %}<p{{ dp('summary') }}>{{ cv.summary }}</p>{% endif %}
 
   {% if cv.experience %}
   <h2>Experience</h2>
-  {% for e in cv.experience %}
+  {% for e in cv.experience %}{% set i = loop.index0 %}
   <div class="item">
-    <div class="head"><span><b>{{ e.title }}</b>, {{ e.company }}</span><span class="when">{{ e.period }}</span></div>
-    {% if e.bullets %}<ul>{% for b in e.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+    <div class="head"><span><b{{ dp('experience[%d].title' % i) }}>{{ e.title }}</b>{% if e.company %}, <span{{ dp('experience[%d].company' % i) }}>{{ e.company }}</span>{% endif %}</span><span class="when"{{ dp('experience[%d].period' % i) }}>{{ e.period }}</span></div>
+    {% if e.bullets %}<ul>{% for b in e.bullets %}<li{{ dp('experience[%d].bullets[%d]' % (i, loop.index0)) }}>{{ b }}</li>{% endfor %}</ul>{% endif %}
   </div>
   {% endfor %}
   {% endif %}
 
   {% if cv.projects %}
   <h2>Projects</h2>
-  {% for p in cv.projects %}
+  {% for p in cv.projects %}{% set i = loop.index0 %}
   <div class="item">
-    <div class="head"><span><b>{{ p.name }}</b>{% if p.tech %} — {{ p.tech | join(", ") }}{% endif %}</span>{% if p.link %}<span class="when">{{ p.link }}</span>{% endif %}</div>
-    {% if p.description %}<p>{{ p.description }}</p>{% endif %}
+    <div class="head"><span><b{{ dp('projects[%d].name' % i) }}>{{ p.name }}</b>{% if p.tech %} — {{ p.tech | join(", ") }}{% endif %}</span>{% if p.link %}<span class="when"{{ dp('projects[%d].link' % i) }}>{{ p.link }}</span>{% endif %}</div>
+    {% if p.description %}<p{{ dp('projects[%d].description' % i) }}>{{ p.description }}</p>{% endif %}
   </div>
   {% endfor %}
   {% endif %}
 
   {% if cv.education %}
   <h2>Education</h2>
-  {% for ed in cv.education %}
+  {% for ed in cv.education %}{% set i = loop.index0 %}
   <div class="item">
-    <div class="head"><span><b>{{ ed.degree }}</b>, {{ ed.institution }}</span><span class="when">{{ ed.period }}</span></div>
-    {% if ed.gpa or ed.details %}<p>{% if ed.gpa %}GPA {{ ed.gpa }}{% endif %}{% if ed.gpa and ed.details %} · {% endif %}{{ ed.details }}</p>{% endif %}
+    <div class="head"><span><b{{ dp('education[%d].degree' % i) }}>{{ ed.degree }}</b>, <span{{ dp('education[%d].institution' % i) }}>{{ ed.institution }}</span></span><span class="when"{{ dp('education[%d].period' % i) }}>{{ ed.period }}</span></div>
+    {% if ed.gpa %}<p>GPA <span{{ dp('education[%d].gpa' % i) }}>{{ ed.gpa }}</span></p>{% endif %}
+    {% if ed.details %}<p{{ dp('education[%d].details' % i) }}>{{ ed.details }}</p>{% endif %}
   </div>
   {% endfor %}
   {% endif %}
 
   {% if cv.skills %}
   <h2>Skills</h2>
-  <p class="skills">{{ cv.skills | join(" · ") }}</p>
+  <p class="skills">{% for s in cv.skills %}<span{{ dp('skills[%d].name' % loop.index0) }}>{{ s }}</span>{% endfor %}</p>
   {% endif %}
 
   {% if languages %}
   <h2>Languages</h2>
-  <p>{% for l in languages %}{{ l.name }}{% if l.level %} ({{ l.level }}){% endif %}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+  <p class="skills">{% for l in languages %}<span><span{{ dp('languages[%d].name' % loop.index0) }}>{{ l.name }}</span>{% if l.level %} (<span{{ dp('languages[%d].level' % loop.index0) }}>{{ l.level }}</span>){% endif %}</span>{% endfor %}</p>
   {% endif %}
 </body>
 </html>

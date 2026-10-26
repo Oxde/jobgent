@@ -16,7 +16,8 @@ from jobgent.dashboard import Column, HomeData, applications_board, home_data
 from jobgent.db import Status
 from jobgent.errors import JobgentError, MissingSecretError
 from jobgent.pack.create import PackResult, create_pack, load_pack, pack_dir_for
-from jobgent.pack.render import TemplateInfo, list_templates, render_cv_html, template_file
+from jobgent.pack.pdf import html_to_pdf
+from jobgent.pack.render import EDITABLE_TEMPLATES, TemplateInfo, list_templates, render_cv_html, template_file
 from jobgent.pack.tailor import general_cv
 from jobgent.profile.models import Education, Experience, Language, Profile, Project, Skill
 from jobgent.profile.store import ChecklistItem, completeness
@@ -26,6 +27,46 @@ from jobgent.tracker import WeeklyStats, set_status, weekly_stats
 from jobgent.views import JobDetail, JobSummary, detail, get_job, list_jobs
 
 DIST = Path(__file__).parent.parent.parent / "frontend" / "dist"
+
+# Injected into the CV preview when ?edit=1: every [data-path] element becomes editable in place and saves on blur.
+EDIT_SNIPPET = """
+<style>
+[data-path] { border-radius: 2px; outline: 1px dashed transparent; outline-offset: 1px; transition: outline-color .12s, background-color .12s; }
+[data-path]:hover { outline-color: rgba(255,90,31,.55); cursor: text; }
+[data-path]:focus { outline: 2px solid #ff5a1f; background: rgba(255,90,31,.06); }
+[data-path].jg-saved { background: rgba(62,207,122,.18); }
+[data-path].jg-error { outline: 2px solid #ff6b61; }
+</style>
+<script>
+(function () {
+  const post = (msg) => parent.postMessage(Object.assign({ source: "jobgent-cv" }, msg), "*");
+  document.querySelectorAll("[data-path]").forEach((el) => {
+    el.setAttribute("contenteditable", "plaintext-only");
+    el.setAttribute("spellcheck", "true");
+    let before = el.textContent;
+    el.addEventListener("focus", () => { before = el.textContent; });
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); el.blur(); }
+      if (e.key === "Escape") { el.textContent = before; el.blur(); }
+    });
+    el.addEventListener("blur", async () => {
+      const value = el.textContent.trim();
+      if (value === before.trim()) return;
+      const path = el.getAttribute("data-path");
+      const res = await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path, value }) });
+      if (res.ok) {
+        before = value; el.classList.add("jg-saved"); setTimeout(() => el.classList.remove("jg-saved"), 900);
+        post({ type: "saved", path });
+      } else {
+        let detail = res.statusText; try { detail = (await res.json()).detail; } catch (_) {}
+        el.classList.add("jg-error"); post({ type: "error", path, detail: String(detail) });
+      }
+    });
+  });
+  post({ type: "ready" });
+})();
+</script>
+"""
 
 SECTIONS: dict[str, type[BaseModel]] = {
     "education": Education,
@@ -276,14 +317,39 @@ def build_api(services: Services) -> APIRouter:
         return list_templates()
 
     @api.get("/cv/preview", response_class=HTMLResponse)
-    def cv_preview(template: str | None = None) -> HTMLResponse:
+    def cv_preview(template: str | None = None, edit: bool = False) -> HTMLResponse:
         profile = services.store.load()
         tid = template or profile.preferences.template
         try:
             template_file(tid)
         except KeyError as e:
             raise _bad(e) from e
-        return HTMLResponse(render_cv_html(profile, general_cv(profile), services.store.master_cv_path(), tid))
+        editable = edit and tid in EDITABLE_TEMPLATES and services.store.master_cv_path() is None
+        html = render_cv_html(profile, general_cv(profile), services.store.master_cv_path(), tid, editable=editable)
+        if editable:
+            html = html.replace("</body>", EDIT_SNIPPET + "</body>")
+        return HTMLResponse(html)
+
+    @api.get("/cv/pdf")
+    def cv_pdf(template: str | None = None) -> FileResponse:
+        profile = services.store.load()
+        tid = template or profile.preferences.template
+        try:
+            template_file(tid)
+        except KeyError as e:
+            raise _bad(e) from e
+        html = render_cv_html(profile, general_cv(profile), services.store.master_cv_path(), tid)
+        out = services.settings.home / "cv" / f"cv-{tid}.pdf"
+        try:
+            html_to_pdf(html, out)
+        except RuntimeError as e:
+            raise HTTPException(status_code=500, detail=str(e)) from e
+        name = (profile.personal.name or "cv").replace(" ", "_")
+        return FileResponse(out, media_type="application/pdf", filename=f"{name}_CV.pdf")
+
+    @api.get("/profile/version")
+    def profile_version() -> dict[str, str]:
+        return {"version": services.store.version()}
 
     @api.get("/assistant")
     def assistant_history() -> list[ChatMessage]:

@@ -163,11 +163,16 @@ def landing_data(out: Path = typer.Argument(Path("landing/data.json"))) -> None:
 
 
 @app.command()
-def mcp() -> None:
-    """Run the MCP server on stdio."""
+def mcp(http: bool = typer.Option(False, help="Serve over streamable HTTP (for ChatGPT and other remote clients) instead of stdio."),
+        port: int = 8790) -> None:
+    """Run the MCP server: stdio for Claude Code / Claude Desktop / Cursor, --http for ChatGPT connectors."""
     from jobgent.mcp_server import build_mcp
 
-    build_mcp(build_services()).run()
+    server = build_mcp(build_services())
+    if http:
+        server.run(transport="streamable-http", host="127.0.0.1", port=port)
+    else:
+        server.run()
 
 
 @app.command()
