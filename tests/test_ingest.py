@@ -2,9 +2,9 @@ from datetime import datetime
 
 import httpx
 
-from stageone.db import Job, open_db
-from stageone.ingest import dedupe_key, run_fetch, upsert_jobs
-from stageone.sources.base import RawJob
+from jobgent.db import Job, open_db
+from jobgent.ingest import dedupe_key, run_fetch, upsert_jobs
+from jobgent.sources.base import RawJob
 
 
 def raw(source: str, ext: str, company: str, title: str, desc: str = "d") -> RawJob:

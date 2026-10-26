@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
-from stageone.db import Job, Status, open_db
-from stageone.tracker import set_status, weekly_stats
+from jobgent.db import Job, Status, open_db
+from jobgent.tracker import set_status, weekly_stats
 
 
 def add_job(s, i: int) -> Job:

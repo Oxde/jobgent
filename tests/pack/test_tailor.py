@@ -1,11 +1,11 @@
 from datetime import date, datetime
 
-from stageone.db import Job
-from stageone.llm import FakeLLM
-from stageone.pack.letter import CoverLetter, write_letter
-from stageone.pack.render import render_cv_html
-from stageone.pack.tailor import TailoredCV, tailor_cv
-from stageone.profile.models import Education, Experience, Personal, Profile, SearchProfile
+from jobgent.db import Job
+from jobgent.llm import FakeLLM
+from jobgent.pack.letter import CoverLetter, write_letter
+from jobgent.pack.render import render_cv_html
+from jobgent.pack.tailor import TailoredCV, tailor_cv
+from jobgent.profile.models import Education, Experience, Personal, Profile, SearchProfile
 
 
 def profile() -> Profile:

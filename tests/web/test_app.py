@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from stageone.web.app import create_app
+from jobgent.web.app import create_app
 
 
 def test_feed_lists_jobs(services):

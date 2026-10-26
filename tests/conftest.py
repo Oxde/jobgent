@@ -3,18 +3,18 @@ from pathlib import Path
 
 import pytest
 
-from stageone.config import load_settings
-from stageone.db import Job, Match, open_db
-from stageone.llm import FakeLLM
-from stageone.profile.models import Personal, Profile, SearchProfile
-from stageone.profile.store import ProfileStore
-from stageone.service import Services
+from jobgent.config import load_settings
+from jobgent.db import Job, Match, open_db
+from jobgent.llm import FakeLLM
+from jobgent.profile.models import Personal, Profile, SearchProfile
+from jobgent.profile.store import ProfileStore
+from jobgent.service import Services
 
 
 @pytest.fixture
 def services(tmp_path: Path) -> Services:
     """A Services bundle on a temp home with a verified profile and two scored jobs."""
-    settings = load_settings(env={"STAGEONE_HOME": str(tmp_path), "APIFY_TOKEN": "", "ANTHROPIC_API_KEY": ""},
+    settings = load_settings(env={"JOBGENT_HOME": str(tmp_path), "APIFY_TOKEN": "", "ANTHROPIC_API_KEY": ""},
                              secrets_file=tmp_path / "none")
     store = ProfileStore(settings.profile_dir)
     store.save(Profile(verified=True, personal=Personal(name="T"),

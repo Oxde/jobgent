@@ -2,10 +2,10 @@ from datetime import date, datetime
 
 from sqlalchemy import select
 
-from stageone.db import Job, Match, open_db
-from stageone.llm import FakeLLM
-from stageone.profile.models import Personal, Profile, SearchProfile
-from stageone.score import ScoreOutput, profile_for_prompt, score_jobs
+from jobgent.db import Job, Match, open_db
+from jobgent.llm import FakeLLM
+from jobgent.profile.models import Personal, Profile, SearchProfile
+from jobgent.score import ScoreOutput, profile_for_prompt, score_jobs
 
 
 def profile() -> Profile:
@@ -61,8 +61,8 @@ def test_profile_for_prompt_has_no_contact_details():
 
 
 def test_score_job_links_match_to_job_object(tmp_path):
-    from stageone.score import score_job
-    from stageone.views import detail
+    from jobgent.score import score_job
+    from jobgent.views import detail
 
     Session = open_db(tmp_path / "t.db")
     with Session() as s:

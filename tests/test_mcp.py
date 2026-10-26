@@ -3,7 +3,7 @@ import json
 
 from fastmcp import Client
 
-from stageone.mcp_server import build_mcp
+from jobgent.mcp_server import build_mcp
 
 EXPECTED = {
     "profile_get", "profile_update", "profile_set_verified", "profile_import_jobkiller", "profile_get_voice",

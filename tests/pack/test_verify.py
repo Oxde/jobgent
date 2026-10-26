@@ -2,10 +2,10 @@ from datetime import date
 
 import pytest
 
-from stageone.errors import InventedClaimError
-from stageone.llm import FakeLLM
-from stageone.pack.verify import VerifyOutput, verify_against_profile
-from stageone.profile.models import Personal, Profile, SearchProfile
+from jobgent.errors import InventedClaimError
+from jobgent.llm import FakeLLM
+from jobgent.pack.verify import VerifyOutput, verify_against_profile
+from jobgent.profile.models import Personal, Profile, SearchProfile
 
 
 def profile() -> Profile:

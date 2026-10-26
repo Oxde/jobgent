@@ -2,10 +2,10 @@ from datetime import date, datetime
 
 from sqlalchemy import select
 
-from stageone.classify import Classification, ClassificationBatch, classify_jobs, feed_filter, prefilter
-from stageone.db import Job, open_db
-from stageone.llm import FakeLLM
-from stageone.profile.models import SearchProfile
+from jobgent.classify import Classification, ClassificationBatch, classify_jobs, feed_filter, prefilter
+from jobgent.db import Job, open_db
+from jobgent.llm import FakeLLM
+from jobgent.profile.models import SearchProfile
 
 
 def job(title: str, **kw: object) -> Job:
@@ -53,7 +53,7 @@ def test_feed_filter_keeps_dutch_plus_drops_dutch_required(tmp_path):
 
 
 def test_in_region():
-    from stageone.classify import in_region
+    from jobgent.classify import in_region
 
     assert in_region(None) is True
     assert in_region("Amsterdam, Netherlands") is True

@@ -1,5 +1,5 @@
 # NL companies whose vacancies are served by a public ATS JSON feed. Every board id below was fetched live on 26 Oct 2026.
-# Check them any time with `stageone companies`. Add your own: find which ATS hosts the careers page, add { name, ats, board }.
+# Check them any time with `jobgent companies`. Add your own: find which ATS hosts the careers page, add { name, ats, board }.
 # Not here (no public feed on these six ATSs): ASML, Philips, Booking, Heineken, TomTom, Signify, NXP, Vanderlande,
 # Coolblue, Backbase, WeTransfer, Framer, Otrium, Sendcloud, Swapfiets, Bugaboo, Tiqets, Miro, Optiver, Vinted.
 # Those reach the feed through LinkedIn (APIFY_TOKEN) or `job_add`.

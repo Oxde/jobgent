@@ -3,8 +3,8 @@ import pytest
 import respx
 from pydantic import BaseModel
 
-from stageone.errors import LLMError
-from stageone.llm import AnthropicLLM, FakeLLM
+from jobgent.errors import LLMError
+from jobgent.llm import AnthropicLLM, FakeLLM
 
 
 class Out(BaseModel):

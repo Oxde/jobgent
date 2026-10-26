@@ -1,5 +1,5 @@
 [project]
-name = "stageone"
+name = "jobgent"
 version = "0.1.0"
 description = "Internship copilot: find, match, tailor, track. MCP-first."
 readme = "README.md"
@@ -22,7 +22,7 @@ dependencies = [
 ]
 
 [project.scripts]
-stageone = "stageone.cli:app"
+jobgent = "jobgent.cli:app"
 
 [dependency-groups]
 dev = [
@@ -37,7 +37,7 @@ requires = ["hatchling==1.27.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["stageone"]
+packages = ["jobgent"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

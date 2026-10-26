@@ -3,7 +3,7 @@ from datetime import datetime
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from stageone.db import Application, Job, Status, open_db
+from jobgent.db import Application, Job, Status, open_db
 
 
 def make_job(**overrides: object) -> Job:

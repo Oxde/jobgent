@@ -3,7 +3,7 @@ __pycache__/
 *.pyc
 .env
 *.db
-.stageone/
+.jobgent/
 .superpowers/
 .mypy_cache/
 .pytest_cache/

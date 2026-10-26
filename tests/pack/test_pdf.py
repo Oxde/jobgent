@@ -1,6 +1,6 @@
 import pytest
 
-from stageone.pack.pdf import html_to_pdf
+from jobgent.pack.pdf import html_to_pdf
 
 pytestmark = pytest.mark.slow
 

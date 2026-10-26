@@ -326,6 +326,59 @@ wheels = [
 ]
 
 [[package]]
+name = "jobgent"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "anthropic" },
+    { name = "fastapi" },
+    { name = "fastmcp" },
+    { name = "httpx" },
+    { name = "jinja2" },
+    { name = "playwright" },
+    { name = "pydantic" },
+    { name = "pypdf" },
+    { name = "python-multipart" },
+    { name = "pyyaml" },
+    { name = "sqlalchemy" },
+    { name = "typer" },
+    { name = "uvicorn" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "respx" },
+    { name = "types-pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "anthropic", specifier = "==0.49.0" },
+    { name = "fastapi", specifier = "==0.115.12" },
+    { name = "fastmcp", specifier = "==2.3.4" },
+    { name = "httpx", specifier = "==0.28.1" },
+    { name = "jinja2", specifier = "==3.1.6" },
+    { name = "playwright", specifier = "==1.52.0" },
+    { name = "pydantic", specifier = "==2.11.3" },
+    { name = "pypdf", specifier = "==5.4.0" },
+    { name = "python-multipart", specifier = "==0.0.20" },
+    { name = "pyyaml", specifier = "==6.0.2" },
+    { name = "sqlalchemy", specifier = "==2.0.40" },
+    { name = "typer", specifier = "==0.15.2" },
+    { name = "uvicorn", specifier = "==0.34.2" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = "==1.15.0" },
+    { name = "pytest", specifier = "==8.3.5" },
+    { name = "respx", specifier = "==0.22.0" },
+    { name = "types-pyyaml", specifier = "==6.0.12.20250402" },
+]
+
+[[package]]
 name = "jsonschema"
 version = "4.26.0"
 source = { registry = "https://pypi.org/simple" }
@@ -789,59 +842,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/db/3c/fa6517610dc641262b77cc7bf994ecd17465812c1b0585fe33e11be758ab/sse_starlette-3.0.3.tar.gz", hash = "sha256:88cfb08747e16200ea990c8ca876b03910a23b547ab3bd764c0d8eb81019b971", size = 21943, upload-time = "2025-10-30T18:44:20.117Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/23/a0/984525d19ca5c8a6c33911a0c164b11490dd0f90ff7fd689f704f84e9a11/sse_starlette-3.0.3-py3-none-any.whl", hash = "sha256:af5bf5a6f3933df1d9c7f8539633dc8444ca6a97ab2e2a7cd3b6e431ac03a431", size = 11765, upload-time = "2025-10-30T18:44:18.834Z" },
-]
-
-[[package]]
-name = "stageone"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "anthropic" },
-    { name = "fastapi" },
-    { name = "fastmcp" },
-    { name = "httpx" },
-    { name = "jinja2" },
-    { name = "playwright" },
-    { name = "pydantic" },
-    { name = "pypdf" },
-    { name = "python-multipart" },
-    { name = "pyyaml" },
-    { name = "sqlalchemy" },
-    { name = "typer" },
-    { name = "uvicorn" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "pytest" },
-    { name = "respx" },
-    { name = "types-pyyaml" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "anthropic", specifier = "==0.49.0" },
-    { name = "fastapi", specifier = "==0.115.12" },
-    { name = "fastmcp", specifier = "==2.3.4" },
-    { name = "httpx", specifier = "==0.28.1" },
-    { name = "jinja2", specifier = "==3.1.6" },
-    { name = "playwright", specifier = "==1.52.0" },
-    { name = "pydantic", specifier = "==2.11.3" },
-    { name = "pypdf", specifier = "==5.4.0" },
-    { name = "python-multipart", specifier = "==0.0.20" },
-    { name = "pyyaml", specifier = "==6.0.2" },
-    { name = "sqlalchemy", specifier = "==2.0.40" },
-    { name = "typer", specifier = "==0.15.2" },
-    { name = "uvicorn", specifier = "==0.34.2" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = "==1.15.0" },
-    { name = "pytest", specifier = "==8.3.5" },
-    { name = "respx", specifier = "==0.22.0" },
-    { name = "types-pyyaml", specifier = "==6.0.12.20250402" },
 ]
 
 [[package]]

@@ -6,12 +6,12 @@ from datetime import date
 import pytest
 from fastmcp import Client
 
-from stageone.llm import FakeLLM
-from stageone.mcp_server import build_mcp
-from stageone.pack.letter import CoverLetter
-from stageone.pack.tailor import TailoredCV
-from stageone.pack.verify import VerifyOutput
-from stageone.profile.models import Personal, Profile, SearchProfile
+from jobgent.llm import FakeLLM
+from jobgent.mcp_server import build_mcp
+from jobgent.pack.letter import CoverLetter
+from jobgent.pack.tailor import TailoredCV
+from jobgent.pack.verify import VerifyOutput
+from jobgent.profile.models import Personal, Profile, SearchProfile
 
 
 def call(mcp, name, args):
@@ -38,7 +38,7 @@ def test_invented_claim_is_named_for_agent(services):
 
 
 def test_missing_key_is_named_for_agent(services):
-    from stageone.errors import MissingSecretError
+    from jobgent.errors import MissingSecretError
 
     def boom():
         raise MissingSecretError("ANTHROPIC_API_KEY")
@@ -73,13 +73,13 @@ def test_profile_update_keeps_strings_raw(services):
 
 
 def test_jobs_fetch_without_anthropic_key_returns_report(services, monkeypatch):
-    from stageone.errors import MissingSecretError
+    from jobgent.errors import MissingSecretError
 
     def boom():
         raise MissingSecretError("ANTHROPIC_API_KEY")
 
     services.llm_factory = boom
-    monkeypatch.setattr("stageone.fetch.load_companies", lambda p: [])
+    monkeypatch.setattr("jobgent.fetch.load_companies", lambda p: [])
     data = json.loads(call(build_mcp(services), "jobs_fetch", {})[0].text)
     assert data["classified"] == 0 and any("ANTHROPIC_API_KEY" in s for s in data["skipped"])
     assert "failed" in data and "sources" in data and "report" not in data

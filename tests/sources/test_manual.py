@@ -4,10 +4,10 @@ import httpx
 import pytest
 import respx
 
-from stageone.errors import SourceError
-from stageone.db import open_db
-from stageone.llm import FakeLLM
-from stageone.sources.manual import ExtractedJob, add_job_from_text, add_job_from_url
+from jobgent.errors import SourceError
+from jobgent.db import open_db
+from jobgent.llm import FakeLLM
+from jobgent.sources.manual import ExtractedJob, add_job_from_text, add_job_from_url
 
 _HOSTS = {"acme.example": "93.184.216.34", "localhost": "127.0.0.1"}
 
@@ -28,7 +28,7 @@ def fake_dns(monkeypatch):
         family = socket.AF_INET6 if ":" in ip else socket.AF_INET
         return [(family, socket.SOCK_STREAM, 6, "", (ip, port))]
 
-    monkeypatch.setattr("stageone.sources.manual.socket.getaddrinfo", getaddrinfo)
+    monkeypatch.setattr("jobgent.sources.manual.socket.getaddrinfo", getaddrinfo)
 
 
 def extracted() -> ExtractedJob:

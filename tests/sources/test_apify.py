@@ -5,8 +5,8 @@ import httpx
 import pytest
 import respx
 
-from stageone.errors import SourceError
-from stageone.sources.apify import ApifyLinkedInSource
+from jobgent.errors import SourceError
+from jobgent.sources.apify import ApifyLinkedInSource
 
 FIX = Path(__file__).parent.parent / "fixtures" / "apify_linkedin.json"
 RUN_URL = "https://api.apify.com/v2/acts/meka.im~linkedin-jobs-scraper/run-sync-get-dataset-items"

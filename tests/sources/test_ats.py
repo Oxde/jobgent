@@ -5,10 +5,10 @@ import httpx
 import pytest
 import respx
 
-from stageone.errors import SourceError
-from stageone.sources.ats import ATSSource
-from stageone.sources.base import html_to_text
-from stageone.sources.companies import Company, load_companies
+from jobgent.errors import SourceError
+from jobgent.sources.ats import ATSSource
+from jobgent.sources.base import html_to_text
+from jobgent.sources.companies import Company, load_companies
 
 FIX = Path(__file__).parent.parent / "fixtures" / "ats"
 

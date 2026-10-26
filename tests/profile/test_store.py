@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from stageone.profile.models import Education, Personal, Profile, SearchProfile
-from stageone.profile.store import ProfileStore
+from jobgent.profile.models import Education, Personal, Profile, SearchProfile
+from jobgent.profile.store import ProfileStore
 
 FIXTURE = Path(__file__).parent.parent / "fixtures" / "jobkiller_profile.json"
 

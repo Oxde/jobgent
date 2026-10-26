@@ -3,20 +3,20 @@ from pathlib import Path
 
 import pytest
 
-from stageone.config import load_settings
-from stageone.db import Application, Job, Status, open_db
-from stageone.errors import ProfileNotVerifiedError, StageOneError
-from stageone.llm import FakeLLM
-from stageone.pack.create import create_pack
-from stageone.pack.letter import CoverLetter
-from stageone.pack.tailor import TailoredCV
-from stageone.pack.verify import VerifyOutput
-from stageone.profile.models import Personal, Profile, SearchProfile
-from stageone.profile.store import ProfileStore
+from jobgent.config import load_settings
+from jobgent.db import Application, Job, Status, open_db
+from jobgent.errors import ProfileNotVerifiedError, JobgentError
+from jobgent.llm import FakeLLM
+from jobgent.pack.create import create_pack
+from jobgent.pack.letter import CoverLetter
+from jobgent.pack.tailor import TailoredCV
+from jobgent.pack.verify import VerifyOutput
+from jobgent.profile.models import Personal, Profile, SearchProfile
+from jobgent.profile.store import ProfileStore
 
 
 def setup(tmp_path: Path, verified: bool):
-    settings = load_settings(env={"STAGEONE_HOME": str(tmp_path)}, secrets_file=tmp_path / "none")
+    settings = load_settings(env={"JOBGENT_HOME": str(tmp_path)}, secrets_file=tmp_path / "none")
     store = ProfileStore(settings.profile_dir)
     store.save(Profile(verified=verified, personal=Personal(name="T"),
                        search=SearchProfile(start_from=date(2027, 2, 1), start_to=date(2027, 4, 1))))
@@ -78,11 +78,11 @@ def test_retries_once_when_two_pages(tmp_path):
 
 def test_fails_when_still_two_pages(tmp_path):
     settings, store, Session = setup(tmp_path, verified=True)
-    with Session() as s, pytest.raises(StageOneError, match="2 pages"):
+    with Session() as s, pytest.raises(JobgentError, match="2 pages"):
         create_pack(settings, s, FakeLLM(responses(n_tailor=2)), store, job_id=1, pdf=FakePdf([2, 2]))
 
 
 def test_unknown_job(tmp_path):
     settings, store, Session = setup(tmp_path, verified=True)
-    with Session() as s, pytest.raises(StageOneError, match="999"):
+    with Session() as s, pytest.raises(JobgentError, match="999"):
         create_pack(settings, s, FakeLLM([]), store, job_id=999, pdf=FakePdf([1]))
