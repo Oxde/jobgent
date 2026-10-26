@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Tracker — StageOne{% endblock %}
+{% block body %}
+<p class="goalline">Applied this week: <b>{{ stats.applied_this_week }} / {{ stats.goal }}</b></p>
+<div class="board">
+{% for col in columns %}
+  <div class="col">
+    <h2>{{ col.replace('_', ' ') }} <span>{{ stats.by_status.get(col, 0) }}</span></h2>
+    {% for a in apps if a.status == col %}
+      <a class="card" href="/jobs/{{ a.id }}"><b>{{ a.title }}</b><span>{{ a.company }}</span></a>
+    {% endfor %}
+  </div>
+{% endfor %}
+</div>
+{% endblock %}

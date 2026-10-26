@@ -1,0 +1,48 @@
+[project]
+name = "stageone"
+version = "0.1.0"
+description = "Internship copilot: find, match, tailor, track. MCP-first."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "anthropic==0.49.0",
+    "fastmcp==2.3.4",
+    "typer==0.15.2",
+    "pydantic==2.11.3",
+    "sqlalchemy==2.0.40",
+    "httpx==0.28.1",
+    "pyyaml==6.0.2",
+    "playwright==1.52.0",
+    "fastapi==0.115.12",
+    "uvicorn==0.34.2",
+    "jinja2==3.1.6",
+    "python-multipart==0.0.20",
+    "pypdf==5.4.0",
+]
+
+[project.scripts]
+stageone = "stageone.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest==8.3.5",
+    "respx==0.22.0",
+    "mypy==1.15.0",
+    "types-PyYAML==6.0.12.20250402",
+]
+
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["stageone"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: needs a browser"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"

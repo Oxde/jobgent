@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }} — {{ job.company }}{% endblock %}
+{% block body %}
+<article class="detail">
+  <div class="head">
+    <span class="score s{{ (job.score or 0) // 10 }}">{{ job.score if job.score is not none else '–' }}</span>
+    <div>
+      <h1>{{ job.title }}</h1>
+      <div class="sub">{{ job.company }}{% if job.location %} · {{ job.location }}{% endif %}{% if job.start_hint %} · starts {{ job.start_hint }}{% endif %}{% if job.months %} · {{ job.months }} months{% endif %}{% if job.dutch_plus %} · Dutch is a plus{% endif %}</div>
+    </div>
+  </div>
+
+  {% if job.reasons %}<section><h2>Why it fits</h2><ul>{% for r in job.reasons %}<li>{{ r }}</li>{% endfor %}</ul></section>{% endif %}
+  {% if job.gaps %}<section><h2>Gaps</h2><ul class="gaps">{% for g in job.gaps %}<li>{{ g }}</li>{% endfor %}</ul></section>{% endif %}
+
+  <section class="actions">
+    <form method="post" action="/jobs/{{ job.id }}/status">
+      <select name="status">{% for s in statuses %}<option value="{{ s }}" {% if s == job.status %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+      <input name="notes" placeholder="notes (optional)">
+      <button>Save</button>
+    </form>
+    {% if job.url %}<a class="btn" href="{{ job.url }}" target="_blank" rel="noopener">Open posting ↗</a>{% endif %}
+  </section>
+
+  <section id="pack">
+    {% include "_pack.html" %}
+  </section>
+
+  <section><h2>Posting</h2><pre class="desc">{{ job.description }}</pre></section>
+</article>
+{% endblock %}

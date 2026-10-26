@@ -1,0 +1,1 @@
+Extract the job posting from the text. Return title, company, location (or null), the full posting text as description (keep requirements and responsibilities; drop navigation, cookie banners, footers), and posted_at as an ISO date if stated, else null. If the text does not look like a single job posting, still do your best and put what you see.

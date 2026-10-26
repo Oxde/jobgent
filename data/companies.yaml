@@ -1,0 +1,82 @@
+# NL companies whose vacancies are served by a public ATS JSON feed. Every board id below was fetched live on 26 Oct 2026.
+# Check them any time with `stageone companies`. Add your own: find which ATS hosts the careers page, add { name, ats, board }.
+# Not here (no public feed on these six ATSs): ASML, Philips, Booking, Heineken, TomTom, Signify, NXP, Vanderlande,
+# Coolblue, Backbase, WeTransfer, Framer, Otrium, Sendcloud, Swapfiets, Bugaboo, Tiqets, Miro, Optiver, Vinted.
+# Those reach the feed through LinkedIn (APIFY_TOKEN) or `job_add`.
+companies:
+  # greenhouse
+  - { name: Adyen, ats: greenhouse, board: adyen }
+  - { name: Picnic, ats: greenhouse, board: teampicnic }
+  - { name: bol.com, ats: greenhouse, board: bolcom }
+  - { name: Catawiki, ats: greenhouse, board: catawiki }
+  - { name: IMC Trading, ats: greenhouse, board: imc }
+  - { name: Flow Traders, ats: greenhouse, board: flowtraders }
+  - { name: Databricks, ats: greenhouse, board: databricks }
+  - { name: Elastic, ats: greenhouse, board: elastic }
+  - { name: Dept, ats: greenhouse, board: dept }
+  - { name: Bird, ats: greenhouse, board: bird }
+  - { name: Travix, ats: greenhouse, board: travix }
+  - { name: HelloFresh, ats: greenhouse, board: hellofresh }
+  - { name: Datadog, ats: greenhouse, board: datadog }
+  - { name: JetBrains, ats: greenhouse, board: jetbrains }
+  - { name: HousingAnywhere, ats: greenhouse, board: housinganywhere }
+  - { name: KnowBe4, ats: greenhouse, board: knowbe4 }
+  - { name: Mews, ats: greenhouse, board: mewssystems }
+  - { name: Creative Fabrica, ats: greenhouse, board: creativefabrica }
+  - { name: Fourthline, ats: greenhouse, board: fourthline }
+  # ashby
+  - { name: Weaviate, ats: ashby, board: weaviate }
+  - { name: Prosus, ats: ashby, board: prosus }
+  - { name: Crisp, ats: ashby, board: crisp }
+  - { name: Mollie, ats: ashby, board: mollie }
+  - { name: Bynder, ats: ashby, board: bynder }
+  - { name: DataSnipper, ats: ashby, board: datasnipper }
+  - { name: Trengo, ats: ashby, board: careerstrengo }
+  - { name: Bitvavo, ats: ashby, board: bitvavo }
+  - { name: Polarsteps, ats: ashby, board: polarsteps }
+  - { name: Monumental, ats: ashby, board: monumental }
+  - { name: QuantWare, ats: ashby, board: quantware }
+  - { name: Tebi, ats: ashby, board: tebi }
+  - { name: Overstory, ats: ashby, board: overstory }
+  - { name: Axelera AI, ats: ashby, board: axelera }
+  - { name: Lightspeed, ats: ashby, board: lightspeedhq }
+  # lever
+  - { name: Insify, ats: lever, board: insify }
+  - { name: Mendix, ats: lever, board: mendix }
+  - { name: bloomon, ats: lever, board: bloomon }
+  # recruitee
+  - { name: bunq, ats: recruitee, board: bunq }
+  - { name: Floryn, ats: recruitee, board: floryn }
+  - { name: Nmbrs, ats: recruitee, board: nmbrs }
+  - { name: DPG Media, ats: recruitee, board: dpgmedia }
+  - { name: Sweco, ats: recruitee, board: sweco }
+  - { name: Centric, ats: recruitee, board: centric }
+  - { name: Conclusion, ats: recruitee, board: conclusion }
+  - { name: Corendon, ats: recruitee, board: corendon }
+  - { name: Quooker, ats: recruitee, board: quooker }
+  - { name: Tony's Chocolonely, ats: recruitee, board: tonyschocolonely }
+  - { name: Hanos, ats: recruitee, board: hanos }
+  - { name: Loavies, ats: recruitee, board: loavies }
+  - { name: My Jewellery, ats: recruitee, board: myjewellery }
+  - { name: NEMO Science Museum, ats: recruitee, board: nemo }
+  - { name: Fastned, ats: recruitee, board: fastned }
+  - { name: Shypple, ats: recruitee, board: shypple }
+  - { name: Wonderkind, ats: recruitee, board: wonderkind }
+  - { name: Aidence, ats: recruitee, board: aidence }
+  - { name: Channable, ats: recruitee, board: channable }
+  - { name: Transavia, ats: recruitee, board: transavia }
+  - { name: Vandebron, ats: recruitee, board: vandebron }
+  - { name: Greenchoice, ats: recruitee, board: greenchoice }
+  - { name: Helloprint, ats: recruitee, board: helloprint }
+  - { name: NLR, ats: recruitee, board: nlr }
+  - { name: Sioux Technologies, ats: recruitee, board: sioux }
+  - { name: funda, ats: recruitee, board: funda }
+  - { name: Dyflexis, ats: recruitee, board: dyflexis }
+  - { name: Talpa Network, ats: recruitee, board: talpanetwork }
+  - { name: CZ, ats: recruitee, board: cz }
+  - { name: Brand New Day, ats: recruitee, board: brandnewday }
+  - { name: Studytube, ats: recruitee, board: studytube }
+  # workable (rate-limited: keep this list short)
+  - { name: Fairphone, ats: workable, board: fairphone }
+  - { name: Treatwell, ats: workable, board: treatwell }
+  - { name: GoodHabitz, ats: workable, board: goodhabitz }

@@ -1,0 +1,53 @@
+from datetime import date, datetime
+
+from stageone.db import Job
+from stageone.llm import FakeLLM
+from stageone.pack.letter import CoverLetter, write_letter
+from stageone.pack.render import render_cv_html
+from stageone.pack.tailor import TailoredCV, tailor_cv
+from stageone.profile.models import Education, Experience, Personal, Profile, SearchProfile
+
+
+def profile() -> Profile:
+    return Profile(personal=Personal(name="Test Student", email="t@x.nl", location="Amsterdam"),
+                   education=[Education(institution="Uni", degree="Math", period="2023–now")],
+                   experience=[Experience(company="Acme", title="Dev", bullets=["Built a bot"])],
+                   search=SearchProfile(start_from=date(2027, 2, 1), start_to=date(2027, 4, 1)))
+
+
+def job() -> Job:
+    return Job(id=1, source="s", external_id="1", url="https://acme/1", title="AI Intern", company="Acme", location="Amsterdam",
+               description="We want Python.", posted_at=None, fetched_at=datetime.now(), dedupe_key="k")
+
+
+def tailored() -> TailoredCV:
+    return TailoredCV(summary="Math student who builds bots.", experience=profile().experience, projects=[],
+                      skills=["Python"], education=profile().education, change_summary=["Moved Python first"])
+
+
+def test_tailor_cv_passes_profile_and_job_and_extra_instruction():
+    llm = FakeLLM([tailored()])
+    cv = tailor_cv(llm, "m", profile(), job(), extra_instruction="shorten by 20%")
+    assert cv.change_summary == ["Moved Python first"]
+    system, user = llm.prompts[0]
+    assert "AI Intern" in user and "Built a bot" in user and "shorten by 20%" in user
+    assert "never" in system.lower()
+
+
+def test_write_letter_uses_voice():
+    llm = FakeLLM([CoverLetter(body="Dear Acme, ...")])
+    letter = write_letter(llm, "m", profile(), job(), voice="Short. Dry.")
+    assert letter.body.startswith("Dear Acme")
+    assert "Short. Dry." in llm.prompts[0][0]
+
+
+def test_render_cv_html_default_template():
+    html = render_cv_html(profile(), tailored(), template_path=None)
+    assert "Test Student" in html and "size: A4" in html and "Built a bot" in html and "Python" in html
+
+
+def test_render_cv_html_custom_template(tmp_path):
+    t = tmp_path / "cv.html"
+    t.write_text("<html><body>{{ personal.name }} / {{ cv.summary }}</body></html>")
+    html = render_cv_html(profile(), tailored(), template_path=t)
+    assert html == "<html><body>Test Student / Math student who builds bots.</body></html>"

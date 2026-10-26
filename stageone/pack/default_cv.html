@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ personal.name }} — CV</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10.5pt; line-height: 1.35; color: #111; }
+  h1 { font-size: 20pt; margin: 0 0 2pt; letter-spacing: -0.02em; }
+  .contact { font-size: 9pt; color: #444; margin-bottom: 8pt; }
+  .contact span + span::before { content: " · "; }
+  h2 { font-size: 10pt; text-transform: uppercase; letter-spacing: 0.08em; margin: 10pt 0 4pt; padding-bottom: 2pt; border-bottom: 1px solid #ccc; }
+  .item { margin-bottom: 5pt; }
+  .head { display: flex; justify-content: space-between; }
+  .head b { font-weight: 600; }
+  .head .when { color: #555; font-size: 9pt; }
+  ul { margin: 2pt 0 0; padding-left: 14pt; }
+  li { margin: 0 0 1pt; }
+  p { margin: 0; }
+  .skills { line-height: 1.5; }
+</style>
+</head>
+<body>
+  <h1>{{ personal.name }}</h1>
+  <div class="contact">
+    {% if personal.location %}<span>{{ personal.location }}</span>{% endif %}
+    {% if personal.email %}<span>{{ personal.email }}</span>{% endif %}
+    {% if personal.phone %}<span>{{ personal.phone }}</span>{% endif %}
+    {% if personal.linkedin %}<span>{{ personal.linkedin }}</span>{% endif %}
+    {% if personal.github %}<span>{{ personal.github }}</span>{% endif %}
+  </div>
+
+  <p>{{ cv.summary }}</p>
+
+  {% if cv.experience %}
+  <h2>Experience</h2>
+  {% for e in cv.experience %}
+  <div class="item">
+    <div class="head"><span><b>{{ e.title }}</b>, {{ e.company }}</span><span class="when">{{ e.period }}</span></div>
+    {% if e.bullets %}<ul>{% for b in e.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if cv.projects %}
+  <h2>Projects</h2>
+  {% for p in cv.projects %}
+  <div class="item">
+    <div class="head"><span><b>{{ p.name }}</b>{% if p.tech %} — {{ p.tech | join(", ") }}{% endif %}</span>{% if p.link %}<span class="when">{{ p.link }}</span>{% endif %}</div>
+    {% if p.description %}<p>{{ p.description }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if cv.education %}
+  <h2>Education</h2>
+  {% for ed in cv.education %}
+  <div class="item">
+    <div class="head"><span><b>{{ ed.degree }}</b>, {{ ed.institution }}</span><span class="when">{{ ed.period }}</span></div>
+    {% if ed.gpa or ed.details %}<p>{% if ed.gpa %}GPA {{ ed.gpa }}{% endif %}{% if ed.gpa and ed.details %} · {% endif %}{{ ed.details }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if cv.skills %}
+  <h2>Skills</h2>
+  <p class="skills">{{ cv.skills | join(" · ") }}</p>
+  {% endif %}
+
+  {% if languages %}
+  <h2>Languages</h2>
+  <p>{% for l in languages %}{{ l.name }}{% if l.level %} ({{ l.level }}){% endif %}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}StageOne{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/2.0.4/htmx.min.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">StageOne</a>
+  <nav><a href="/">Feed</a><a href="/tracker">Tracker</a></nav>
+  <div class="goal" title="applied this week / weekly goal">
+    <span>{{ stats.applied_this_week }} / {{ stats.goal }}</span>
+    <div class="bar"><i style="width: {{ (100 * stats.applied_this_week / stats.goal) if stats.goal else 0 }}%"></i></div>
+  </div>
+</header>
+<main>{% block body %}{% endblock %}</main>
+</body>
+</html>

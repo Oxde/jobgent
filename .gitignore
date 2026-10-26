@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+*.db
+.stageone/
+.superpowers/
+.mypy_cache/
+.pytest_cache/
+dist/
+.claude/
