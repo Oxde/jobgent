@@ -10,7 +10,7 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def no_dns(monkeypatch):
-    monkeypatch.setattr("jobgent.liveness.assert_public_http_url", lambda url: None)
+    monkeypatch.setattr("jobgent.sources.manual.assert_public_http_url", lambda url: None)
 
 
 def job(url: str) -> Job:
@@ -47,3 +47,19 @@ def test_server_errors_are_unknown_not_closed():
 def test_no_url_is_unknown():
     with httpx.Client() as client:
         assert check_liveness(job(""), client) == "unknown"
+
+
+def test_redirect_to_a_private_address_is_not_followed(monkeypatch):
+    from jobgent.errors import SourceError
+
+    def guard(url: str) -> None:
+        if "127.0.0.1" in url:
+            raise SourceError("manual", "not public")
+
+    monkeypatch.setattr("jobgent.sources.manual.assert_public_http_url", guard)
+    with respx.mock as m:
+        m.get("https://jobs.example.com/r").mock(return_value=httpx.Response(302, headers={"Location": "http://127.0.0.1/admin"}))
+        admin = m.get("http://127.0.0.1/admin").mock(return_value=httpx.Response(200, text="open"))
+        with httpx.Client() as client:
+            assert check_liveness(job("https://jobs.example.com/r"), client) == "unknown"
+    assert admin.call_count == 0

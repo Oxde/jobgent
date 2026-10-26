@@ -10,7 +10,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from jobgent.db import Job
-from jobgent.sources.manual import assert_public_http_url
+from jobgent.sources.manual import safe_get
 from jobgent.errors import SourceError
 
 Liveness = Literal["open", "closed", "unknown"]
@@ -28,9 +28,8 @@ def check_liveness(job: Job, client: httpx.Client) -> Liveness:
     if not job.url:
         return "unknown"
     try:
-        assert_public_http_url(job.url)
-        resp = client.get(job.url, timeout=20, follow_redirects=True, headers={"User-Agent": "Mozilla/5.0 (Jobgent)"})
-    except (httpx.HTTPError, SourceError):
+        resp = safe_get(client, job.url, timeout=20)
+    except SourceError:
         return "unknown"
     if resp.status_code in (404, 410):
         return "closed"

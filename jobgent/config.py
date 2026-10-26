@@ -28,6 +28,7 @@ class Settings(BaseModel):
     fast_model: str
     smart_model: str
     linkedin_actor: str
+    linkedin_mode: str  # auto (Apify if a token is set, else guest search) | apify | guest | off
     companies_file: Path
 
     @property
@@ -88,5 +89,6 @@ def load_settings(
         fast_model=get("JOBGENT_FAST_MODEL") or FAST_MODEL,
         smart_model=get("JOBGENT_SMART_MODEL") or SMART_MODEL,
         linkedin_actor=get("JOBGENT_LINKEDIN_ACTOR") or DEFAULT_LINKEDIN_ACTOR,
+        linkedin_mode=(get("JOBGENT_LINKEDIN") or "auto").lower(),
         companies_file=Path(get("JOBGENT_COMPANIES") or Path(__file__).parent.parent / "data" / "companies.yaml"),
     )

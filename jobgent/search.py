@@ -10,7 +10,7 @@ from sqlalchemy import select
 from jobgent.db import Job
 from jobgent.ingest import run_fetch
 from jobgent.service import Services
-from jobgent.sources.apify import ApifyLinkedInSource
+from jobgent.fetch import linkedin_reason, linkedin_source
 from jobgent.views import JobSummary, list_jobs
 
 _GENERIC = {"intern", "interns", "internship", "internships", "stage", "stagiair", "job", "jobs", "role", "position", "in", "for", "and", "the", "a"}
@@ -29,10 +29,10 @@ def search_jobs(services: Services, query: str, location: str, limit: int = 30, 
     error: str | None = None
     fresh_ids: set[int] = set()
     settings = services.settings
-    if use_linkedin and not settings.apify_token:
-        error = "linkedin: APIFY_TOKEN not set; searched saved jobs only"
-    elif use_linkedin:
-        source = ApifyLinkedInSource(token=settings.apify_token or "", keywords=[query], locations=[location], max_per_query=50, actor=settings.linkedin_actor)
+    source = linkedin_source(settings, [query], [location], max_per_query=50) if use_linkedin else None
+    if use_linkedin and source is None:
+        error = f"linkedin: {linkedin_reason(settings)}; searched saved jobs only"
+    elif source is not None:
         with services.sessionmaker() as s, services.http_client_factory() as client:
             report = run_fetch(s, [source], client)
             result = report.results[0]

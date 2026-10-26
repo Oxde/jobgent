@@ -15,6 +15,7 @@ from jobgent.service import Services
 def no_real_dotenv(monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory) -> None:
     """Tests must never read the developer's real <repo>/.env."""
     monkeypatch.setattr("jobgent.config.DEFAULT_DOTENV_FILE", tmp_path_factory.mktemp("noenv") / ".env")
+    monkeypatch.setenv("JOBGENT_LINKEDIN", "off")  # no test may reach LinkedIn; tests that need a mode set it explicitly
 
 
 @pytest.fixture
