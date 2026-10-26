@@ -16,6 +16,11 @@ export interface DocumentView { units: Unit[]; trimmed: { label: string }[]; ver
 export type DocKind = "cv" | "letter" | "email" | "followup";
 export interface TimelineItem { kind: string; text: string; at: string; }
 export interface AiEditResult { declined: boolean; reason: string; check_this: string[]; }
+export interface QueueItem { job: JobSummary; verdict: Verdict; reason: string; red_flags: string[]; }
+export interface AgentRunView { started_at: string; finished_at: string | null; status: string; step: string; fetched: number; evaluated: number; queued: number; note: string; error: string; }
+export interface LearningGap { skill: string; jobs: number; weight: number; examples: string[]; }
+export interface CalibrationRow { group: string; sent: number; heard_back: number; interviews: number; }
+export interface InterviewPrep { stage: string; created_at: string; likely_questions: { question: string; why: string; answer_hint: string }[]; stories: { title: string; situation: string; task: string; action: string; result: string; source: string }[]; consistency: string[]; questions_to_ask: string[]; gaps_to_prepare: string[]; }
 export interface Funnel { sent: number; heard_back: number; interview: number; offer: number; response_rate: number; }
 export interface JobPage { job: JobDetail; dims: Dim[] | null; ats: AtsReport | null; pack: PackResult | null; letter: string | null; evaluation: EvaluationView | null; }
 export interface WeeklyStats { applied_this_week: number; goal: number; by_status: Record<string, number>; }
@@ -92,4 +97,10 @@ export const api = {
   timeline: (id: number) => request<TimelineItem[]>(`/jobs/${id}/timeline`),
   followup: (id: number) => request<{ subject: string; body: string }>(`/jobs/${id}/followup`, { method: "POST" }),
   followupSent: (id: number) => request<TimelineItem[]>(`/jobs/${id}/followup/sent`, { method: "POST" }),
+  agent: () => request<{ last_run: AgentRunView | null; queue: QueueItem[] }>("/agent"),
+  agentRun: () => request<AgentRunView>("/agent/run", { method: "POST" }),
+  agentDismiss: (id: number) => request<{ last_run: AgentRunView | null; queue: QueueItem[] }>(`/agent/dismiss/${id}`, { method: "POST" }),
+  insights: () => request<{ learning_gaps: LearningGap[]; calibration: CalibrationRow[] }>("/insights"),
+  interviewPrep: (id: number) => request<InterviewPrep | null>(`/jobs/${id}/interview-prep`),
+  makeInterviewPrep: (id: number, stage: string) => request<InterviewPrep>(`/jobs/${id}/interview-prep`, json({ stage })),
 };

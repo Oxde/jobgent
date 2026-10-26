@@ -42,6 +42,7 @@ function HomeView({ data, reload }: { data: HomeData; reload: () => void }) {
 
         <div className="flex flex-col gap-4">
           {data.funnel && <FunnelCard funnel={data.funnel} weekly={data.weekly} goal={data.stats.goal} />}
+          <InsightsCard />
           <section className="panel">
             <h2 className="mb-3 text-[15px] font-bold">Your profile <span className="ml-1 font-medium text-text-3">{done} / {data.checklist.length}</span></h2>
             <ul className="mb-3">
@@ -165,6 +166,38 @@ function FunnelCard({ funnel, weekly, goal }: { funnel: Funnel; weekly: { week_s
           return <rect key={w.week_start} x={i * 22 + 4} y={60 - h} width={14} height={Math.max(h, 1)} rx={2} className={w.sent >= goal ? "fill-ok" : "fill-accent/70"}><title>{`Week of ${w.week_start}: ${w.sent}`}</title></rect>;
         })}
       </svg>
+    </section>
+  );
+}
+
+function InsightsCard() {
+  const { data } = useLoad(() => api.insights(), []);
+  if (!data || (data.learning_gaps.length === 0 && data.calibration.length === 0)) return null;
+  return (
+    <section className="panel">
+      {data.learning_gaps.length > 0 && (
+        <>
+          <h2 className="mb-1 text-[15px] font-bold">What to learn next</h2>
+          <p className="mb-2 text-[12.5px] text-text-3">Requirements you don't show yet, weighted by how much they matter and how often they cost you a job.</p>
+          <ul className="mb-3 grid gap-1">
+            {data.learning_gaps.slice(0, 6).map((g) => (
+              <li key={g.skill} className="flex items-baseline justify-between gap-2 text-[13.5px]" title={g.examples.join(", ")}>
+                <span>{g.skill}</span><span className="text-[12px] text-text-3">{g.jobs} job{g.jobs === 1 ? "" : "s"}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {data.calibration.length > 0 && (
+        <>
+          <h3 className="mb-1 text-[13px] font-bold text-text-2">Do the verdicts predict answers?</h3>
+          <table className="w-full text-[12.5px]">
+            <thead><tr className="text-left text-text-3"><th className="font-medium">Group</th><th className="font-medium">Sent</th><th className="font-medium">Heard back</th><th className="font-medium">Interview</th></tr></thead>
+            <tbody>{data.calibration.map((r) => <tr key={r.group}><td className="capitalize">{r.group}</td><td>{r.sent}</td><td>{r.heard_back}</td><td>{r.interviews}</td></tr>)}</tbody>
+          </table>
+          <p className="mt-1 text-[11.5px] text-text-3">Advisory: small numbers mean little.</p>
+        </>
+      )}
     </section>
   );
 }

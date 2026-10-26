@@ -96,8 +96,26 @@ class Evaluation(Base):
     deadline: Mapped[str | None] = mapped_column(String(64), nullable=True)
     model: Mapped[str] = mapped_column(String(64), default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    dismissed: Mapped[bool] = mapped_column(default=False)
 
     job: Mapped[Job] = relationship(back_populates="evaluation")
+
+
+class AgentRun(Base):
+    """One run of the daily job agent."""
+
+    __tablename__ = "agent_runs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), default="running")  # running | done | failed
+    step: Mapped[str] = mapped_column(String(64), default="")
+    fetched: Mapped[int] = mapped_column(default=0)
+    evaluated: Mapped[int] = mapped_column(default=0)
+    queued: Mapped[int] = mapped_column(default=0)
+    note: Mapped[str] = mapped_column(Text, default="")
+    error: Mapped[str] = mapped_column(Text, default="")
 
 
 class ApplicationEvent(Base):

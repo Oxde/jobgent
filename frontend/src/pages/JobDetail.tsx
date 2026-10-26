@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Copy, ExternalLink, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
-import { api, STATUSES, type DocKind, type DocumentView, type EvaluationView, type Status, type TimelineItem } from "../lib/api";
+import { api, STATUSES, type DocKind, type DocumentView, type EvaluationView, type InterviewPrep, type Status, type TimelineItem } from "../lib/api";
 import { useLoad, useStore } from "../lib/store";
 import { ErrorNote, Score, STATUS_LABEL, UrgencyTags, VerdictChip } from "../components/ui";
 import CvCanvas from "../components/CvCanvas";
 import DocEditor from "../components/DocEditor";
 import { useToast } from "../components/Toast";
 
-type Tab = "resume" | "letter" | "email" | "posting" | "notes";
-const TABS: [Tab, string][] = [["resume", "Resume"], ["letter", "Cover letter"], ["email", "Email"], ["posting", "Posting"], ["notes", "Notes"]];
+type Tab = "resume" | "letter" | "email" | "interview" | "posting" | "notes";
+const TABS: [Tab, string][] = [["resume", "Resume"], ["letter", "Cover letter"], ["email", "Email"], ["interview", "Interview"], ["posting", "Posting"], ["notes", "Notes"]];
 
 export default function JobDetail() {
   const { id } = useParams();
@@ -119,6 +119,7 @@ export default function JobDetail() {
             </div>
           )}
           {tab === "notes" && <NotesTab jobId={job.id} />}
+          {tab === "interview" && <InterviewTab jobId={job.id} />}
         </section>
       </div>
     </div>
@@ -248,6 +249,59 @@ function InterviewPrompt({ jobId, onDone }: { jobId: number; onDone: () => void 
       <input type="datetime-local" className="input w-auto" value={at} onChange={(e) => setAt(e.target.value)} aria-label="Interview date and time" />
       <button className="btn btn-sm btn-primary" disabled={!at} onClick={() => api.setInterview(jobId, at.length === 16 ? `${at}:00` : at).then(() => { toast.show("Interview saved", { tone: "ok" }); onDone(); })}>Save</button>
       <button className="btn btn-quiet btn-sm" onClick={onDone}>Later</button>
+    </div>
+  );
+}
+
+function InterviewTab({ jobId }: { jobId: number }) {
+  const toast = useToast();
+  const [prep, setPrep] = useState<InterviewPrep | null>(null);
+  const [stage, setStage] = useState("first round");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { api.interviewPrep(jobId).then(setPrep).catch(() => setPrep(null)); }, [jobId]);
+  async function make() {
+    setBusy(true);
+    try { setPrep(await api.makeInterviewPrep(jobId, stage)); } catch (e) { toast.show((e as Error).message, { tone: "error" }); } finally { setBusy(false); }
+  }
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="panel flex flex-wrap items-center gap-2 text-[13.5px]">
+        <span>Prepare for the</span>
+        <select className="input w-auto" value={stage} onChange={(e) => setStage(e.target.value)} aria-label="Interview stage">
+          {["first round", "recruiter call", "technical interview", "case / assignment review", "final round"].map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <button className="btn btn-primary" onClick={make} disabled={busy}>{busy ? "Preparing…" : prep ? "Prepare again" : "Prepare"}</button>
+        <span className="text-[12px] text-text-3">Built from your profile and the CV and letter you sent. Stories never get invented numbers.</span>
+      </div>
+      {prep && (
+        <div className="grid gap-4 xl:grid-cols-2">
+          <section className="panel">
+            <h2 className="mb-2 text-[15px] font-bold">Likely questions <span className="text-[12px] font-normal text-text-3">({prep.stage})</span></h2>
+            <ol className="list-decimal pl-5 text-[13.5px]">{prep.likely_questions.map((q) => <li key={q.question} className="mb-2"><b>{q.question}</b>{q.why && <span className="block text-[12px] text-text-3">Why: {q.why}</span>}{q.answer_hint && <span className="block text-[12.5px] text-text-2">Use: {q.answer_hint}</span>}</li>)}</ol>
+          </section>
+          <section className="panel">
+            <h2 className="mb-2 text-[15px] font-bold">Your STAR stories</h2>
+            {prep.stories.map((s) => (
+              <details key={s.title} className="mb-2 rounded-lg border border-line p-2.5 text-[13px]" open>
+                <summary className="cursor-pointer font-semibold">{s.title} <span className="text-[11.5px] font-normal text-text-3">{s.source}</span></summary>
+                <dl className="mt-1 grid grid-cols-[80px_1fr] gap-x-2 gap-y-1">
+                  <dt className="text-text-3">Situation</dt><dd>{s.situation}</dd><dt className="text-text-3">Task</dt><dd>{s.task}</dd>
+                  <dt className="text-text-3">Action</dt><dd>{s.action}</dd><dt className="text-text-3">Result</dt><dd>{s.result}</dd>
+                </dl>
+              </details>
+            ))}
+          </section>
+          <section className="panel">
+            <h2 className="mb-2 text-[15px] font-bold">Stay consistent with what you sent</h2>
+            <ul className="list-disc pl-5 text-[13.5px]">{prep.consistency.map((c) => <li key={c}>{c}</li>)}</ul>
+            {prep.gaps_to_prepare.length > 0 && <><h3 className="mb-1 mt-3 text-[13px] font-bold text-text-2">Gaps to talk about honestly</h3><ul className="list-disc pl-5 text-[13.5px] text-warn">{prep.gaps_to_prepare.map((g) => <li key={g}>{g}</li>)}</ul></>}
+          </section>
+          <section className="panel">
+            <h2 className="mb-2 text-[15px] font-bold">Questions to ask them</h2>
+            <ul className="list-disc pl-5 text-[13.5px]">{prep.questions_to_ask.map((q) => <li key={q}>{q}</li>)}</ul>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

@@ -24,7 +24,11 @@ from jobgent.pack.followup import FollowUp, write_followup
 from jobgent.documents import save_document
 from jobgent.documents import leave_out, load_document, put_back, restore_version, set_unit, undo_last, units_of, versions, Unit
 from jobgent.errors import JobgentError, MissingSecretError
+from jobgent.agent import QueueItem, agent_queue, last_run, run_agent
 from jobgent.evaluate import evaluate_job
+from jobgent.insights import CalibrationRow, LearningGap, calibration, learning_gaps
+from jobgent.interview import InterviewPrep, prepare_interview
+from jobgent.sources.base import html_to_text
 from jobgent.pack.create import PackResult, create_pack, load_pack, pack_dir_for
 from jobgent.pack.factguard import fact_check
 from jobgent.pack.pdf import html_to_pdf
@@ -169,6 +173,37 @@ class AiEditResult(BaseModel):
 
 class InterviewBody(BaseModel):
     at: datetime
+
+
+class StageBody(BaseModel):
+    stage: str = "first round"
+
+
+class SavedPrep(InterviewPrep):
+    stage: str
+    created_at: datetime
+
+
+class AgentRunView(BaseModel):
+    started_at: datetime
+    finished_at: datetime | None
+    status: str
+    step: str
+    fetched: int
+    evaluated: int
+    queued: int
+    note: str
+    error: str
+
+
+class AgentView(BaseModel):
+    last_run: AgentRunView | None
+    queue: list[QueueItem]
+
+
+class InsightsView(BaseModel):
+    learning_gaps: list[LearningGap]
+    calibration: list[CalibrationRow]
 
 
 class StatusBody(BaseModel):
@@ -474,6 +509,65 @@ def build_api(services: Services) -> APIRouter:
             s.add(ApplicationEvent(job_id=job_id, kind="followup", text="Follow-up sent"))
             s.commit()
             return timeline(s, job_id)
+
+    @api.get("/agent")
+    def agent() -> AgentView:
+        with services.sessionmaker() as s:
+            run = last_run(s)
+            return AgentView(last_run=AgentRunView.model_validate(run, from_attributes=True) if run else None, queue=agent_queue(s))
+
+    @api.post("/agent/run")
+    def agent_run() -> AgentRunView:
+        try:
+            run = run_agent(services)
+        except JobgentError as e:
+            raise HTTPException(status_code=500, detail=str(e)) from e
+        return AgentRunView.model_validate(run, from_attributes=True)
+
+    @api.post("/agent/dismiss/{job_id}")
+    def agent_dismiss(job_id: int) -> AgentView:
+        with services.sessionmaker() as s:
+            job = get_job(s, job_id)
+            if job.evaluation is not None:
+                job.evaluation.dismissed = True
+                s.commit()
+        return agent()
+
+    @api.get("/insights")
+    def insights() -> InsightsView:
+        with services.sessionmaker() as s:
+            return InsightsView(learning_gaps=learning_gaps(s, services.store.load()), calibration=calibration(s))
+
+    def _prep_path(job_id: int) -> Path:
+        with services.sessionmaker() as s:
+            return pack_dir_for(services.settings, get_job(s, job_id)) / "interview_prep.json"
+
+    @api.get("/jobs/{job_id}/interview-prep")
+    def get_prep(job_id: int) -> SavedPrep | None:
+        path = _prep_path(job_id)
+        return SavedPrep.model_validate_json(path.read_text()) if path.is_file() else None
+
+    @api.post("/jobs/{job_id}/interview-prep")
+    def make_prep(job_id: int, body: StageBody) -> SavedPrep:
+        profile = services.store.load()
+        try:
+            llm = services.llm_factory()
+        except MissingSecretError as e:
+            raise _bad(e) from e
+        with services.sessionmaker() as s:
+            job = get_job(s, job_id)
+            gaps = [str(r.get("text")) for r in (job.evaluation.requirements if job.evaluation else []) if r.get("status") == "gap"]
+            out_dir = pack_dir_for(services.settings, job)
+            cv_text = html_to_text((out_dir / "cv.html").read_text()) if (out_dir / "cv.html").is_file() else ""
+            letter = (out_dir / "cover_letter.md").read_text() if (out_dir / "cover_letter.md").is_file() else ""
+            try:
+                prep = prepare_interview(llm, services.settings.smart_model, profile, job, body.stage, gaps, cv_text, letter)
+            except JobgentError as e:
+                raise _bad(e) from e
+        saved = SavedPrep(**prep.model_dump(), stage=body.stage, created_at=datetime.now())
+        out_dir.mkdir(parents=True, exist_ok=True)
+        (out_dir / "interview_prep.json").write_text(saved.model_dump_json(indent=2))
+        return saved
 
     @api.get("/applications")
     def applications() -> list[Column]:

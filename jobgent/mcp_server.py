@@ -14,7 +14,10 @@ from jobgent.errors import JobgentError
 
 from jobgent.classify import classify_jobs
 from jobgent.db import Status
+from jobgent.agent import QueueItem, agent_queue, run_agent
 from jobgent.evaluate import evaluate_job
+from jobgent.insights import LearningGap, learning_gaps
+from jobgent.interview import InterviewPrep, prepare_interview
 from jobgent.fetch import FetchSummary, fetch_all
 from jobgent.pack.create import PackResult, create_pack, load_pack
 from jobgent.guides import cv_writing_guide
@@ -178,6 +181,40 @@ def build_mcp(services: Services) -> FastMCP:
         it finds, then returns matching internships from everything saved (company boards included), best first.
         Example: query="AI engineering intern", location="Amsterdam". Check `source_error` if LinkedIn failed."""
         return search_jobs(services, query, location, limit, use_linkedin)
+
+    @mcp.tool(name="agent_run")
+    @in_thread
+    def agent_run_tool(max_evaluate: int = 15, min_score: int = 65) -> dict[str, object]:
+        """Run the job agent once: fetch new postings, score them, evaluate the best `max_evaluate` new ones (score ≥ min_score)
+        and queue those worth applying to. Never applies or sends anything. Then call agent_queue."""
+        run = run_agent(services, max_evaluate, min_score)
+        return {k: getattr(run, k) for k in ("status", "fetched", "evaluated", "queued", "note")}
+
+    @mcp.tool(name="agent_queue")
+    @surface_errors
+    def agent_queue_tool() -> list[QueueItem]:
+        """Postings the agent recommends (apply first, then consider), with its reason and any red flags."""
+        with services.sessionmaker() as s:
+            return agent_queue(s)
+
+    @mcp.tool(name="learning_gaps")
+    @surface_errors
+    def learning_gaps_tool() -> list[LearningGap]:
+        """What to learn next: requirements the student lacks, weighted by importance and how often they cost a job.
+        Skills already in the profile are excluded (those are CV-wording problems, not learning gaps)."""
+        with services.sessionmaker() as s:
+            return learning_gaps(s, services.store.load())
+
+    @mcp.tool(name="interview_prep")
+    @in_thread
+    def interview_prep_tool(job_id: int, stage: str = "first round") -> InterviewPrep:
+        """Interview prep for one application: likely questions, STAR stories from profile facts only, consistency
+        reminders against the CV and letter that were sent, questions to ask, gaps to prepare."""
+        profile = services.store.load()
+        with services.sessionmaker() as s:
+            job = get_job(s, job_id)
+            gaps = [str(r.get("text")) for r in (job.evaluation.requirements if job.evaluation else []) if r.get("status") == "gap"]
+            return prepare_interview(services.llm_factory(), services.settings.smart_model, profile, job, stage, gaps, "", "")
 
     @mcp.tool()
     @surface_errors

@@ -5,22 +5,24 @@ import { useLoad, useStore } from "../lib/store";
 import { Empty, ErrorNote, JobLink, PageHead, Score, STATUS_LABEL, StatusTag, UrgencyTags, VerdictChip } from "../components/ui";
 import { useToast } from "../components/Toast";
 import Pipeline from "../components/Pipeline";
+import AgentQueue from "../components/AgentQueue";
 
 export default function Jobs() {
   const [params, setParams] = useSearchParams();
-  const view = params.get("view") === "pipeline" ? "pipeline" : "find";
+  const raw = params.get("view");
+  const view: "find" | "agent" | "pipeline" = raw === "pipeline" || raw === "agent" ? raw : "find";
   return (
     <div className="p-7">
-      <PageHead title="Jobs" sub={view === "find" ? "Internships in the Netherlands, in English, scored against your profile." : "Everything you saved or sent. Drag a card to move it."}>
+      <PageHead title="Jobs" sub={{ find: "Internships in the Netherlands, in English, scored against your profile.", agent: "What the job agent recommends, and why.", pipeline: "Everything you saved or sent. Drag a card to move it." }[view]}>
         <div className="inline-flex overflow-hidden rounded-lg border border-line-2" role="tablist">
-          {(["find", "pipeline"] as const).map((v) => (
+          {(["find", "agent", "pipeline"] as const).map((v) => (
             <button key={v} role="tab" aria-selected={view === v} className={`min-h-[36px] px-4 text-[13.5px] font-medium ${view === v ? "bg-bg-3 text-text" : "text-text-2 hover:text-text"}`} onClick={() => setParams(v === "find" ? {} : { view: v })}>
-              {v === "find" ? "Find" : "Pipeline"}
+              {{ find: "Find", agent: "Agent picks", pipeline: "Pipeline" }[v]}
             </button>
           ))}
         </div>
       </PageHead>
-      {view === "find" ? <Find /> : <Pipeline />}
+      {view === "find" ? <Find /> : view === "agent" ? <AgentQueue /> : <Pipeline />}
     </div>
   );
 }

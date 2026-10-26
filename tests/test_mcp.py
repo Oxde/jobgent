@@ -9,7 +9,7 @@ EXPECTED = {
     "profile_get", "profile_update", "profile_set_verified", "profile_import_jobkiller", "profile_get_voice",
     "profile_set_voice", "profile_notes_append", "profile_set_master_cv", "jobs_fetch", "jobs_list", "job_get",
     "job_add", "job_score", "pack_create", "pack_get", "application_set_status", "applications_list", "stats",
-    "jobs_search", "job_evaluate", "cv_writing_guide",
+    "jobs_search", "job_evaluate", "cv_writing_guide", "agent_run", "agent_queue", "learning_gaps", "interview_prep",
 }
 
 

@@ -88,6 +88,36 @@ def search(query: str, location: str = "Amsterdam", limit: int = 30, linkedin: b
 
 
 @app.command()
+def agent(schedule: str | None = typer.Option(None, help="HH:MM: print how to run the agent every day at that time (macOS launchd).")) -> None:
+    """Run the job agent once (fetch, score, evaluate the best new postings, queue them). Never sends anything."""
+    if schedule:
+        hour, _, minute = schedule.partition(":")
+        repo = Path(__file__).resolve().parent.parent
+        plist = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.jobgent.agent</string>
+  <key>ProgramArguments</key><array><string>/bin/zsh</string><string>-lc</string><string>cd {repo} && uv run jobgent agent</string></array>
+  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>{int(hour)}</integer><key>Minute</key><integer>{int(minute or 0)}</integer></dict>
+  <key>StandardOutPath</key><string>{Path.home()}/.jobgent/agent.log</string>
+  <key>StandardErrorPath</key><string>{Path.home()}/.jobgent/agent.log</string>
+</dict></plist>"""
+        typer.echo("Save this as ~/Library/LaunchAgents/com.jobgent.agent.plist, then run:\n  launchctl load ~/Library/LaunchAgents/com.jobgent.agent.plist\n")
+        typer.echo(plist)
+        return
+    from jobgent.agent import agent_queue, run_agent
+
+    s = build_services()
+    run = run_agent(s)
+    typer.echo(f"fetched {run.fetched}, evaluated {run.evaluated}, queued {run.queued}")
+    if run.note:
+        typer.echo(run.note)
+    with s.sessionmaker() as session:
+        for q in agent_queue(session)[:15]:
+            typer.echo(f"{q.job.id:5d}  {q.verdict:8s} {q.job.title} — {q.job.company}: {q.reason}")
+
+
+@app.command()
 def jobs(min_score: int = 0, status: str | None = None, limit: int = 30) -> None:
     """The scored feed."""
     s = build_services()
