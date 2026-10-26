@@ -72,7 +72,7 @@ export default function Pipeline() {
       ) : (
         <LastDrag.Provider value={lastDrag}>
           <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-            <div className="grid gap-3 overflow-x-auto pb-2" style={{ gridTemplateColumns: `repeat(${data.length}, minmax(140px, 1fr))` }}>
+            <div className="grid gap-3 overflow-x-auto pb-2 select-none" style={{ gridTemplateColumns: `repeat(${data.length}, minmax(140px, 1fr))` }}>
               {data.map((col) => <ColumnView key={col.key} col={col} moving={moving} />)}
             </div>
           </DndContext>

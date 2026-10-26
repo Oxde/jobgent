@@ -1,5 +1,11 @@
 [
  {
+  "id": "times",
+  "name": "Times (your old CV)",
+  "description": "Times New Roman, green section titles, one page. The look of the CV you applied with in 2025.",
+  "color": "#2E7D32"
+ },
+ {
   "id": "modern",
   "name": "Modern",
   "description": "Clean modern design with accent color sidebar header",

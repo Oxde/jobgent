@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ personal.name }} - CV</title>
+<style>
+@page { size: A4; margin: 12mm; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: 'Times New Roman', Times, serif; font-size: 11.5pt; line-height: 1.25; color: #000; background: #fff; max-width: 210mm; margin: 0 auto; padding: 0.3in; }
+.header { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 10pt; align-items: end; margin-bottom: 0.14in; }
+.name { font-size: 20pt; font-weight: bold; color: #2E7D32; line-height: 1; margin-bottom: 3pt; }
+.professional-title { font-size: 11.5pt; font-weight: bold; }
+.contact-info { font-size: 10.5pt; line-height: 1.3; color: #555; }
+.contact-info a { color: #0066CC; text-decoration: underline; }
+.objective { text-align: justify; margin-bottom: 0.14in; line-height: 1.35; }
+.section-title { font-size: 13pt; font-weight: bold; color: #2E7D32; border-bottom: 1px solid #000; padding-bottom: 1pt; margin: 0.08in 0 0.08in; }
+.job { margin-bottom: 0.12in; }
+.job-header { display: flex; justify-content: space-between; align-items: baseline; gap: 10pt; margin-bottom: 3pt; }
+.job-title { font-weight: bold; }
+.job-date { font-style: italic; white-space: nowrap; }
+.bullets { list-style: none; padding-left: 0; line-height: 1.3; }
+.bullets li { position: relative; padding-left: 13pt; margin-bottom: 3pt; }
+.bullets li::before { content: "●"; position: absolute; left: 0; font-size: 8pt; top: 2pt; }
+.projects li::before { content: "○"; font-size: 9pt; top: 1pt; }
+.project-title { font-weight: bold; text-decoration: underline; }
+.skills { text-align: justify; line-height: 1.35; margin-bottom: 0.06in; }
+.degree-header { display: flex; justify-content: space-between; gap: 10pt; font-weight: bold; margin-bottom: 2pt; }
+.degree-date { font-style: italic; font-weight: normal; white-space: nowrap; }
+.education-item { margin-bottom: 0.1in; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="name">{{ personal.name }}</div>
+    {% if headline %}<div class="professional-title">{{ headline }}</div>{% endif %}
+  </div>
+  <div class="contact-info">
+    {% if personal.location %}<div>{{ personal.location }}</div>{% endif %}
+    {% if personal.email %}<div>{{ personal.email }}</div>{% endif %}
+    {% if personal.phone %}<div>{{ personal.phone }}</div>{% endif %}
+  </div>
+  <div class="contact-info">
+    {% if personal.linkedin %}<div><a href="https://{{ personal.linkedin | replace('https://', '') }}">{{ personal.linkedin | replace('https://', '') | replace('www.', '') }}</a></div>{% endif %}
+    {% if personal.github %}<div><a href="{{ personal.github }}">{{ personal.github | replace('https://', '') }}</a></div>{% endif %}
+  </div>
+</div>
+
+{% if cv.summary %}<div class="objective">{{ cv.summary }}</div>{% endif %}
+
+{% if cv.experience %}
+<div class="section-title">Work experience</div>
+{% for job in cv.experience %}
+<div class="job">
+  <div class="job-header">
+    <div class="job-title">{% if job.company %}{{ job.company }} | {% endif %}{{ job.title }}</div>
+    <div class="job-date">{{ job.period }}</div>
+  </div>
+  {% if job.bullets %}<ul class="bullets">{% for b in job.bullets %}<li>{{ b }}</li>{% endfor %}</ul>{% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+{% if cv.education %}
+<div class="section-title">Education</div>
+{% for e in cv.education %}
+<div class="education-item">
+  <div class="degree-header"><span>{{ e.degree }}, {{ e.institution }}</span><span class="degree-date">{{ e.period }}</span></div>
+  {% if e.gpa or e.details %}<div>{% if e.gpa %}GPA: {{ e.gpa }}{% endif %}{% if e.gpa and e.details %}. {% endif %}{{ e.details }}</div>{% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+{% if cv.skills %}
+<div class="section-title">Skills</div>
+<div class="skills">{{ cv.skills | join(', ') }}{% if languages %}. <i>Languages:</i> {% for l in languages %}{{ l.name }}{% if l.level %} ({{ l.level }}){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</div>
+{% endif %}
+
+{% if cv.projects %}
+<div class="section-title">Projects</div>
+<ul class="bullets projects">
+{% for p in cv.projects %}
+  <li><span class="project-title">{{ p.name }}</span>{% if p.description %}: {{ p.description }}{% endif %}{% if p.tech %} <i>({{ p.tech | join(', ') }})</i>{% endif %}{% if p.link %} <a href="{{ p.link }}">{{ p.link | replace('https://', '') }}</a>{% endif %}</li>
+{% endfor %}
+</ul>
+{% endif %}
+</body>
+</html>
