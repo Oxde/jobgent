@@ -54,18 +54,25 @@ def create_app(services: Services) -> FastAPI:
         with services.sessionmaker() as s:
             try:
                 pack = create_pack(services.settings, s, services.llm_factory(), services.store, job_id)
-            except JobgentError as e:
+            except (JobgentError, RuntimeError) as e:
                 return templates.TemplateResponse(request, "_pack.html", {"pack": None, "letter": None, "error": str(e), "job_id": job_id})
         return templates.TemplateResponse(request, "_pack.html", {"pack": pack, "letter": pack.letter_md.read_text(), "error": None, "job_id": job_id})
 
     @app.post("/jobs/{job_id}/status")
-    def change_status(job_id: int, status: str = Form(...), notes: str | None = Form(None)) -> RedirectResponse:
+    def change_status(
+        job_id: int, status: str = Form(...), notes: str | None = Form(None), next: str | None = Form(None)
+    ) -> RedirectResponse:
+        try:
+            new_status = Status(status)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Unknown status {status!r}. One of: {', '.join(st.value for st in Status)}") from e
         with services.sessionmaker() as s:
             try:
-                set_status(s, job_id, Status(status), notes)
+                set_status(s, job_id, new_status, notes)
             except JobgentError as e:
                 raise HTTPException(status_code=404, detail=str(e)) from e
-        return RedirectResponse(url=f"/jobs/{job_id}", status_code=303)
+        target = next if next and next.startswith("/") and not next.startswith("//") else f"/jobs/{job_id}"
+        return RedirectResponse(url=target, status_code=303)
 
     @app.get("/tracker", response_class=HTMLResponse)
     def tracker(request: Request) -> HTMLResponse:

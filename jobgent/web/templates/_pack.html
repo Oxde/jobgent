@@ -1,15 +1,17 @@
 {% set jid = job.id if job is defined else job_id %}
 {% if error %}<p class="error">{{ error }}</p>{% endif %}
 {% if pack %}
-  <h2>Application pack</h2>
+  <h2>Your application pack</h2>
   <div class="packlinks">
-    <a class="btn" href="/packs/{{ jid }}/cv.pdf" target="_blank">CV (A4 PDF) ↗</a>
+    <a class="btn primary" href="/packs/{{ jid }}/cv.pdf" target="_blank">Open the CV (A4 PDF)</a>
     {% if pack.apply_email %}<a class="btn" href="mailto:{{ pack.apply_email }}">Email {{ pack.apply_email }}</a>{% endif %}
     <span class="path">{{ pack.dir }}</span>
   </div>
   {% if pack.change_summary %}<h3>What changed in the CV</h3><ul>{% for c in pack.change_summary %}<li>{{ c }}</li>{% endfor %}</ul>{% endif %}
   {% if letter %}<h3>Cover letter</h3><pre class="letter">{{ letter }}</pre>{% endif %}
 {% else %}
-  <button class="btn primary" hx-post="/jobs/{{ jid }}/pack" hx-target="#pack" hx-swap="innerHTML" hx-indicator="#pack-wait">Generate CV + cover letter</button>
-  <span id="pack-wait" class="htmx-indicator">working… (30–60 s)</span>
+  <h2>Application pack</h2>
+  <p>A one-page CV reordered for this role and a cover letter in your voice, every claim checked against your profile.</p>
+  <button class="primary" hx-post="/jobs/{{ jid }}/pack" hx-target="#pack" hx-swap="innerHTML" hx-indicator="#pack-wait">Write CV + cover letter</button>
+  <span id="pack-wait" class="htmx-indicator">Writing, about a minute…</span>
 {% endif %}

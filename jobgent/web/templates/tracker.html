@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Tracker — Jobgent{% endblock %}
 {% block body %}
-<p class="goalline">Applied this week: <b>{{ stats.applied_this_week }} / {{ stats.goal }}</b></p>
+<div class="page-head">
+  <h1>Tracker</h1>
+  <p class="goalline">Sent this week: <b>{{ stats.applied_this_week }} / {{ stats.goal }}</b></p>
+</div>
+{% if not apps %}<p class="empty">Nothing tracked yet. Keep a job in the feed, or set a status on its page, and it shows up here.</p>{% endif %}
 <div class="board">
 {% for col in columns %}
   <div class="col">
     <h2>{{ col.replace('_', ' ') }} <span>{{ stats.by_status.get(col, 0) }}</span></h2>
     {% for a in apps if a.status == col %}
-      <a class="card" href="/jobs/{{ a.id }}"><b>{{ a.title }}</b><span>{{ a.company }}</span></a>
+      <a class="tcard" href="/jobs/{{ a.id }}"><b>{{ a.title }}</b><span>{{ a.company }}</span></a>
     {% endfor %}
   </div>
 {% endfor %}
