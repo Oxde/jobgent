@@ -8,10 +8,14 @@ MCP-first: run it inside Claude Code / Claude Desktop / Cursor and let the agent
 ## Setup (5 minutes)
 
 ```bash
-git clone <this repo> && cd jobgent
+git clone https://github.com/Oxde/jobgent && cd jobgent
 uv sync
 uv run playwright install chromium
+cd frontend && npm ci --ignore-scripts && npm run build && cd ..
+uv run jobgent web        # http://127.0.0.1:8781
 ```
+
+The web app is React + Vite + Tailwind in `frontend/`, served by the same FastAPI process from `frontend/dist` with a JSON API under `/api`. For frontend work: `cd frontend && npm run dev` (proxies `/api` to port 8781).
 
 Secrets go in the environment or in `~/.config/secrets/env`:
 
@@ -53,7 +57,7 @@ uv run jobgent pack 42
 uv run jobgent status 42 applied
 uv run jobgent stats
 uv run jobgent companies        # check every job board in data/companies.yaml
-uv run jobgent web              # http://127.0.0.1:8781
+uv run jobgent web              # http://127.0.0.1:8781 (after building the frontend)
 ```
 
 Daily fetch with cron/launchd: `uv --directory /path/jobgent run jobgent fetch`.

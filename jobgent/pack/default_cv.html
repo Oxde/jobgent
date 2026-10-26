@@ -6,13 +6,16 @@
 <style>
   @page { size: A4; margin: 14mm; }
   html, body { margin: 0; padding: 0; }
+  @media screen { body { max-width: 210mm; margin: 0 auto; padding: 14mm; } }
   body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10.5pt; line-height: 1.35; color: #111; }
   h1 { font-size: 20pt; margin: 0 0 2pt; letter-spacing: -0.02em; }
   .contact { font-size: 9pt; color: #444; margin-bottom: 8pt; }
   .contact span + span::before { content: " · "; }
   h2 { font-size: 10pt; text-transform: uppercase; letter-spacing: 0.08em; margin: 10pt 0 4pt; padding-bottom: 2pt; border-bottom: 1px solid #ccc; }
   .item { margin-bottom: 5pt; }
-  .head { display: flex; justify-content: space-between; }
+  .head { display: flex; justify-content: space-between; gap: 8pt; }
+  .head > span { min-width: 0; overflow-wrap: anywhere; }
+  .head .when { flex: none; }
   .head b { font-weight: 600; }
   .head .when { color: #555; font-size: 9pt; }
   ul { margin: 2pt 0 0; padding-left: 14pt; }

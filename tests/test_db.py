@@ -3,7 +3,7 @@ from datetime import datetime
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from jobgent.db import Application, Job, Status, open_db
+from jobgent.db import Application, Job, Match, Status, open_db
 
 
 def make_job(**overrides: object) -> Job:
@@ -52,3 +52,18 @@ def test_application_default_status_new(tmp_path):
         s.commit()
         assert app.status == Status.new
         assert app.notes == ""
+
+
+def test_open_db_adds_missing_columns_to_old_tables(tmp_path):
+    import sqlite3
+
+    path = tmp_path / "old.db"
+    con = sqlite3.connect(path)
+    con.execute("CREATE TABLE matches (id INTEGER PRIMARY KEY, job_id INTEGER, total INTEGER)")
+    con.execute("INSERT INTO matches (job_id, total) VALUES (1, 50)")
+    con.commit()
+    con.close()
+    Session = open_db(path)
+    with Session() as s:
+        m = s.query(Match).one()
+        assert m.total == 50 and m.keywords == [] and m.reasons == []

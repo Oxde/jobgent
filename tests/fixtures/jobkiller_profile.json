@@ -11,17 +11,69 @@
       "github": "https://github.com/test-student"
     },
     "education": [
-      {"institution": "Example University", "degree": "Applied Mathematics", "status": "ongoing", "period": "2023 – Present", "gpa": "8.0/10"}
+      {
+        "institution": "Example University",
+        "degree": "Applied Mathematics",
+        "status": "ongoing",
+        "period": "2023 \u2013 Present",
+        "gpa": "8.0/10"
+      }
     ],
     "technical_skills": {
-      "web_development": {"description": "Full-stack", "tools": ["React", "Flask"], "experience": "Built two web apps"}
+      "web_development": {
+        "description": "Full-stack",
+        "tools": [
+          "React",
+          "Flask"
+        ],
+        "experience": "Built two web apps"
+      }
     },
     "work_experience": [
-      {"company": "Example Corp", "position": "Developer", "period": "2024 – Present", "responsibilities": ["Built a bot", "Shipped a dashboard"]}
+      {
+        "title": "Automation Engineer",
+        "period": "2023\u2013Present",
+        "description": "Built trading bots for a small fund",
+        "achievements": [
+          "Processed >$1M volume",
+          "150+ users"
+        ],
+        "technologies": [
+          "Python (asyncio)",
+          "Docker"
+        ]
+      },
+      {
+        "title": "Full-Stack Engineer at Example Corp",
+        "period": "2021\u20132022",
+        "description": "Web apps",
+        "achievements": [
+          "Shipped a dashboard"
+        ]
+      }
     ],
     "projects": [
-      {"name": "Trading bot", "description": "Automated trading", "technologies": ["Python"], "link": "https://github.com/test-student/bot"}
+      {
+        "title": "Trading bot",
+        "description": "Automated trading in Python"
+      }
     ],
-    "languages": [{"language": "English", "level": "C1"}, {"language": "Russian", "level": "Native"}]
+    "languages": [
+      "English (B2–C1 (written and spoken))",
+      {
+        "language": "Russian",
+        "level": "Native"
+      }
+    ],
+    "soft_skills": [
+      "Leadership: led hackathon teams"
+    ],
+    "career_objectives": {
+      "goal": "Secure an AI internship",
+      "desired_roles": [
+        "AI Automation Intern",
+        "Data Science Intern"
+      ]
+    }
   }
 }

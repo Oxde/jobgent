@@ -6,7 +6,8 @@ import enum
 from datetime import datetime
 from pathlib import Path
 
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, create_engine
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, create_engine, inspect, text
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
 
 
@@ -89,8 +90,27 @@ class Application(Base):
     job: Mapped[Job] = relationship(back_populates="application")
 
 
+def _add_missing_columns(engine: Engine) -> None:
+    """Tiny forward-only migration: columns added to the models appear in existing tables.
+    SQLite can only ADD COLUMN, so new columns must be nullable or have a default."""
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            if table.name not in inspector.get_table_names():
+                continue
+            existing = {c["name"] for c in inspector.get_columns(table.name)}
+            for column in table.columns:
+                if column.name in existing:
+                    continue
+                ddl = f'ALTER TABLE {table.name} ADD COLUMN {column.name} {column.type.compile(engine.dialect)}'
+                if isinstance(column.type, JSON):
+                    ddl += " DEFAULT '[]'"
+                conn.execute(text(ddl))
+
+
 def open_db(db_path: Path) -> sessionmaker[Session]:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
+    _add_missing_columns(engine)
     Base.metadata.create_all(engine)
     return sessionmaker(bind=engine, expire_on_commit=False)
