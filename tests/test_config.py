@@ -35,3 +35,12 @@ def test_require_present_returns_value(tmp_path):
         secrets_file=tmp_path / "nope",
     )
     assert s.require("ANTHROPIC_API_KEY") == "sk"
+
+
+def test_project_dotenv_is_read_and_beats_the_secrets_file(tmp_path):
+    secrets = tmp_path / "secrets"
+    secrets.write_text("APIFY_TOKEN=from-secrets\nANTHROPIC_API_KEY=sk-secrets\n")
+    dotenv = tmp_path / ".env"
+    dotenv.write_text("# my keys\nAPIFY_TOKEN=from-dotenv\n")
+    s = load_settings(env={"JOBGENT_HOME": str(tmp_path)}, secrets_file=secrets, dotenv_file=dotenv)
+    assert s.apify_token == "from-dotenv" and s.anthropic_api_key == "sk-secrets"

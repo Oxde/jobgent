@@ -14,6 +14,7 @@ from jobgent.errors import MissingSecretError
 SecretName = Literal["ANTHROPIC_API_KEY", "APIFY_TOKEN"]
 
 DEFAULT_SECRETS_FILE = Path.home() / ".config" / "secrets" / "env"
+DEFAULT_DOTENV_FILE = Path(__file__).parent.parent / ".env"  # <repo>/.env, git-ignored
 DEFAULT_HOME = Path.home() / ".jobgent"
 FAST_MODEL = "claude-haiku-4-5-20251001"
 SMART_MODEL = "claude-sonnet-4-5"
@@ -66,9 +67,11 @@ def _parse_secrets_file(path: Path) -> dict[str, str]:
 def load_settings(
     env: Mapping[str, str] | None = None,
     secrets_file: Path | None = None,
+    dotenv_file: Path | None = None,
 ) -> Settings:
-    """Precedence: explicit `env` > process environment > secrets file."""
+    """Precedence: explicit `env` > process environment > <repo>/.env > ~/.config/secrets/env."""
     merged = _parse_secrets_file(secrets_file or DEFAULT_SECRETS_FILE)
+    merged.update({k: v for k, v in _parse_secrets_file(dotenv_file or DEFAULT_DOTENV_FILE).items() if v})
     merged.update(os.environ)
     if env is not None:
         merged.update(env)

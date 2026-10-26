@@ -11,6 +11,12 @@ from jobgent.profile.store import ProfileStore
 from jobgent.service import Services
 
 
+@pytest.fixture(autouse=True)
+def no_real_dotenv(monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory) -> None:
+    """Tests must never read the developer's real <repo>/.env."""
+    monkeypatch.setattr("jobgent.config.DEFAULT_DOTENV_FILE", tmp_path_factory.mktemp("noenv") / ".env")
+
+
 @pytest.fixture
 def services(tmp_path: Path) -> Services:
     """A Services bundle on a temp home with a verified profile and two scored jobs."""
