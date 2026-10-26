@@ -44,3 +44,13 @@ def test_project_dotenv_is_read_and_beats_the_secrets_file(tmp_path):
     dotenv.write_text("# my keys\nAPIFY_TOKEN=from-dotenv\n")
     s = load_settings(env={"JOBGENT_HOME": str(tmp_path)}, secrets_file=secrets, dotenv_file=dotenv)
     assert s.apify_token == "from-dotenv" and s.anthropic_api_key == "sk-secrets"
+
+
+def test_provider_choice(tmp_path):
+    none = tmp_path / "none"
+    a = load_settings(env={"JOBGENT_HOME": str(tmp_path), "ANTHROPIC_API_KEY": "sk", "KIE_API_KEY": "k"}, secrets_file=none)
+    assert a.llm_provider == "anthropic"
+    k = load_settings(env={"JOBGENT_HOME": str(tmp_path), "ANTHROPIC_API_KEY": "", "KIE_API_KEY": "k"}, secrets_file=none)
+    assert k.llm_provider == "kie" and k.fast_model == "claude-sonnet-4-5" and k.smart_model == "claude-sonnet-4-5"
+    n = load_settings(env={"JOBGENT_HOME": str(tmp_path), "ANTHROPIC_API_KEY": "", "KIE_API_KEY": ""}, secrets_file=none)
+    assert n.llm_provider is None

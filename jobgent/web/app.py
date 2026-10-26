@@ -703,8 +703,9 @@ def build_api(services: Services) -> APIRouter:
         except FileNotFoundError:
             companies = 0
         return SettingsPage(
-            keys=[KeyStatus(name="ANTHROPIC_API_KEY", present=bool(st.anthropic_api_key), hint="Required for matching, CVs and letters."),
-                  KeyStatus(name="APIFY_TOKEN", present=bool(st.apify_token), hint="Optional. Turns on LinkedIn search.")],
+            keys=[KeyStatus(name="ANTHROPIC_API_KEY", present=bool(st.anthropic_api_key), hint="AI for matching, CVs and letters (or use KIE below)."),
+                  KeyStatus(name="KIE_API_KEY", present=bool(st.kie_api_key), hint="Alternative AI provider: Claude through KIE. Used when no Anthropic key is set."),
+                  KeyStatus(name="APIFY_TOKEN", present=bool(st.apify_token), hint="Optional. LinkedIn through Apify; without it the free LinkedIn guest search is used.")],
             home_dir=str(st.home), companies=companies, fast_model=st.fast_model, smart_model=st.smart_model,
         )
 

@@ -11,13 +11,14 @@ from pydantic import BaseModel, Field
 
 from jobgent.errors import MissingSecretError
 
-SecretName = Literal["ANTHROPIC_API_KEY", "APIFY_TOKEN"]
+SecretName = Literal["ANTHROPIC_API_KEY", "APIFY_TOKEN", "KIE_API_KEY"]
 
 DEFAULT_SECRETS_FILE = Path.home() / ".config" / "secrets" / "env"
 DEFAULT_DOTENV_FILE = Path(__file__).parent.parent / ".env"  # <repo>/.env, git-ignored
 DEFAULT_HOME = Path.home() / ".jobgent"
 FAST_MODEL = "claude-haiku-4-5-20251001"
 SMART_MODEL = "claude-sonnet-4-5"
+KIE_MODEL = "claude-sonnet-4-5"  # the model KIE documents on its Anthropic-compatible endpoint
 DEFAULT_LINKEDIN_ACTOR = "meka.im~linkedin-jobs-scraper"
 
 
@@ -25,6 +26,7 @@ class Settings(BaseModel):
     home: Path
     anthropic_api_key: str | None = Field(repr=False, exclude=True)
     apify_token: str | None = Field(repr=False, exclude=True)
+    kie_api_key: str | None = Field(default=None, repr=False, exclude=True)
     fast_model: str
     smart_model: str
     linkedin_actor: str
@@ -43,8 +45,17 @@ class Settings(BaseModel):
     def applications_dir(self) -> Path:
         return self.home / "applications"
 
+    @property
+    def llm_provider(self) -> str | None:
+        """anthropic if its key is set, else kie (Claude through KIE's Anthropic-compatible API), else none."""
+        if self.anthropic_api_key:
+            return "anthropic"
+        if self.kie_api_key:
+            return "kie"
+        return None
+
     def require(self, name: SecretName) -> str:
-        value = self.anthropic_api_key if name == "ANTHROPIC_API_KEY" else self.apify_token
+        value = {"ANTHROPIC_API_KEY": self.anthropic_api_key, "APIFY_TOKEN": self.apify_token, "KIE_API_KEY": self.kie_api_key}[name]
         if not value:
             raise MissingSecretError(name)
         return value
@@ -86,8 +97,9 @@ def load_settings(
         home=home,
         anthropic_api_key=get("ANTHROPIC_API_KEY"),
         apify_token=get("APIFY_TOKEN"),
-        fast_model=get("JOBGENT_FAST_MODEL") or FAST_MODEL,
-        smart_model=get("JOBGENT_SMART_MODEL") or SMART_MODEL,
+        kie_api_key=get("KIE_API_KEY"),
+        fast_model=get("JOBGENT_FAST_MODEL") or (FAST_MODEL if get("ANTHROPIC_API_KEY") or not get("KIE_API_KEY") else KIE_MODEL),
+        smart_model=get("JOBGENT_SMART_MODEL") or (SMART_MODEL if get("ANTHROPIC_API_KEY") or not get("KIE_API_KEY") else KIE_MODEL),
         linkedin_actor=get("JOBGENT_LINKEDIN_ACTOR") or DEFAULT_LINKEDIN_ACTOR,
         linkedin_mode=(get("JOBGENT_LINKEDIN") or "auto").lower(),
         companies_file=Path(get("JOBGENT_COMPANIES") or Path(__file__).parent.parent / "data" / "companies.yaml"),

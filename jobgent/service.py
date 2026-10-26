@@ -10,7 +10,8 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from jobgent.config import Settings, load_settings
 from jobgent.db import open_db
-from jobgent.llm import LLM, AnthropicLLM
+from jobgent.errors import MissingSecretError
+from jobgent.llm import LLM, AnthropicLLM, KieLLM
 from jobgent.profile.store import ProfileStore
 
 
@@ -28,7 +29,11 @@ def build_services(settings: Settings | None = None) -> Services:
     settings.home.mkdir(parents=True, exist_ok=True)
 
     def llm_factory() -> LLM:
-        return AnthropicLLM(api_key=settings.require("ANTHROPIC_API_KEY"))
+        if settings.llm_provider == "kie":
+            return KieLLM(api_key=settings.require("KIE_API_KEY"))
+        if settings.llm_provider == "anthropic":
+            return AnthropicLLM(api_key=settings.require("ANTHROPIC_API_KEY"))
+        raise MissingSecretError("ANTHROPIC_API_KEY or KIE_API_KEY")
 
     return Services(
         settings=settings,

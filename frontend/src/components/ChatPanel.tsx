@@ -15,7 +15,7 @@ const EXAMPLES = [
 export default function ChatPanel({ onClose, title = "Assistant" }: { onClose?: () => void; title?: string }) {
   const { bumpProfile } = useStore();
   const { data: settings } = useLoad(() => api.settings(), []);
-  const hasKey = settings?.keys.find((k) => k.name === "ANTHROPIC_API_KEY")?.present ?? true;
+  const hasKey = settings ? settings.keys.some((k) => (k.name === "ANTHROPIC_API_KEY" || k.name === "KIE_API_KEY") && k.present) : true;
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -55,8 +55,8 @@ export default function ChatPanel({ onClose, title = "Assistant" }: { onClose?: 
       <div ref={logRef} className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-4 py-3">
         {!hasKey && (
           <div className="rounded-xl border border-line-2 bg-bg-3 p-3 text-[13px]">
-            <b className="block">No API key? Use Claude instead.</b>
-            <p className="mt-1 text-text-2">This chat needs an Anthropic key. Without one, connect Jobgent to Claude Code or Claude Desktop and ask it to edit your CV there; this page updates live.</p>
+            <b className="block">No AI key? Use Claude instead.</b>
+            <p className="mt-1 text-text-2">This chat needs an Anthropic or KIE key in <code>.env</code>. Without one, connect Jobgent to Claude Code or Claude Desktop and let that agent do the AI work; this page updates live.</p>
             <div className="mt-2 flex items-center gap-2">
               <code className="min-w-0 flex-1 truncate rounded bg-bg px-2 py-1 text-[12px]">{MCP_CMD}</code>
               <button type="button" className="btn btn-sm" onClick={() => navigator.clipboard.writeText(MCP_CMD).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1200); })}>
@@ -82,7 +82,7 @@ export default function ChatPanel({ onClose, title = "Assistant" }: { onClose?: 
 
       <form onSubmit={submit} className="flex gap-2 border-t border-line px-4 py-3">
         <label className="sr-only" htmlFor="chat-input">Message</label>
-        <input id="chat-input" className="input" value={text} onChange={(e) => setText(e.target.value)} placeholder={hasKey ? "Ask for a change…" : "Needs an Anthropic key"} autoComplete="off" disabled={!hasKey} />
+        <input id="chat-input" className="input" value={text} onChange={(e) => setText(e.target.value)} placeholder={hasKey ? "Ask for a change…" : "Needs an AI key (Anthropic or KIE)"} autoComplete="off" disabled={!hasKey} />
         <button className="btn btn-primary" disabled={busy || !text.trim() || !hasKey}>Send</button>
       </form>
     </div>
